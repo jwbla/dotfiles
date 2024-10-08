@@ -1,21 +1,23 @@
+@import "mocha.css";
+
 * {
 	font-size: 20px;
 	font-family: monospace;
 }
 
 window#waybar {
-	background: #292b2e;
-	color: #fdf6e3;
+	background: @surface0;
+	color: @text;
 }
 
 #custom-right-arrow-dark,
 #custom-left-arrow-dark {
-	color: #1a1a1a;
+	color: @base;
 }
 #custom-right-arrow-light,
 #custom-left-arrow-light {
-	color: #292b2e;
-	background: #1a1a1a;
+	color: @surface0;
+	background: @base;
 }
 
 #workspaces,
@@ -28,40 +30,40 @@ window#waybar {
 #battery,
 #disk,
 #tray {
-	background: #1a1a1a;
+	background: @base;
 }
 
 #workspaces button {
 	padding: 0 2px;
-	color: #fdf6e3;
+	color: @text;
 }
 #workspaces button.focused {
-	color: #268bd2;
+	color: @red;
 }
 #workspaces button:hover {
 	box-shadow: inherit;
 	text-shadow: inherit;
 }
 #workspaces button:hover {
-	background: #1a1a1a;
-	border: #1a1a1a;
+	background: @base;
+	border: @base;
 	padding: 0 3px;
 }
 
 #pulseaudio {
-	color: #268bd2;
+	color: @red;
 }
 #memory {
-	color: #2aa198;
+	color: @peach;
 }
 #cpu {
-	color: #6c71c4;
+	color: @yellow;
 }
 #battery {
-	color: #859900;
+	color: @green;
 }
 #disk {
-	color: #b58900;
+	color: @blue;
 }
 
 #clock,
