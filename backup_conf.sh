@@ -6,3 +6,4 @@ cp ~/.config/waybar/* ~/dev/dotfiles/waybar
 cp ~/.config/kitty/* ~/dev/dotfiles/kitty
 cp ~/.config/alacritty/* ~/dev/dotfiles/alacritty
 cp ~/.tmux.conf ~/dev/dotfiles/.tmux.conf
+cp ~/.zshrc ~/dev/dotfiles/.zshrc
