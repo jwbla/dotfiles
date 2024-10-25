@@ -101,6 +101,6 @@ source ~/.rgtv.env
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-alias inv='nvim $(fzf --preview="cat {}")'
+alias inv='nvim $(fzf --preview="batcat --color=always {}")'
 #
 figlet rgtv | lolcat
