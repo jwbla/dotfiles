@@ -30,3 +30,7 @@ fc-cache -fv
 ```
 cp alacritty.toml ~/.config/alacritty
 ```
+
+## Other Stuff
+
+I dunno, git-delta is nice too
