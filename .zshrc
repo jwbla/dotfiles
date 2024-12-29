@@ -75,6 +75,7 @@ plugins=(git)
 
 source $ZSH/oh-my-zsh.sh
 source ~/.rgtv.env
+bindkey -v
 
 # User configuration
 
