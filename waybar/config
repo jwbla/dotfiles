@@ -20,6 +20,9 @@
 		"custom/right-arrow-dark"
 	],
 	"modules-right": [
+        "custom/left-arrow-dark",
+        "network",
+		"custom/left-arrow-light",
 		"custom/left-arrow-dark",
 		"pulseaudio",
 		"custom/left-arrow-light",
@@ -103,14 +106,15 @@
 			"warning": 30,
 			"critical": 15
 		},
-		"format": "{icon} {capacity}%",
+		"format-discharging": "{icon} {capacity}%",
+		"format-charging": "󰚥{icon} {capacity}%",
 		"format-icons": [
 			"",
 			"",
 			"",
 			"",
 			""
-		]
+		],
 	},
 	"disk": {
 		"interval": 5,
@@ -119,5 +123,19 @@
 	},
 	"tray": {
 		"icon-size": 20
-	}
+	},
+    "network": {
+        "interface": "wlp3s0",
+        "format": "{essid} ",
+        "format-connected": "{essid} ",
+        "format-disconnected": "Disconnected",
+        "wifi-strength-icons": [
+            "",
+            "",
+            "",
+            "",
+            ""
+        ],
+        "interval": 10
+    }
 }

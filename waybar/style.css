@@ -27,6 +27,7 @@ window#waybar {
 #pulseaudio,
 #memory,
 #cpu,
+#network,
 #battery,
 #disk,
 #tray {
@@ -51,8 +52,12 @@ window#waybar {
 	padding: 0 3px;
 }
 
+#network {
+    color: @red;
+}
+
 #pulseaudio {
-	color: @red;
+	color: @maroon;
 }
 #memory {
 	color: @peach;
@@ -72,6 +77,7 @@ window#waybar {
 #memory,
 #cpu,
 #battery,
+#network,
 #disk {
 	padding: 0 10px;
 }
