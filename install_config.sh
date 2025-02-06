@@ -8,6 +8,7 @@ cp -r ~/dev/dotfiles/hypr ~/.config
 cp -r ~/dev/dotfiles/waybar ~/.config
 cp -r ~/dev/dotfiles/kitty ~/.config
 cp -r ~/dev/dotfiles/alacritty ~/.config
+cp -r ~/dev/dotfiles/wofi ~/.config
 cp ~/dev/dotfiles/.tmux.conf ~/.tmux.conf 
 cp ~/dev/dotfiles/.zshrc ~/.zshrc
 cp ~/dev/dotfiles/.rgtv.env ~/.rgtv.env
