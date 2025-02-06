@@ -76,7 +76,19 @@
 		"format": "{:%m-%d}",
 		"tooltip": false
 	},
-
+    "network": {
+        "interface": "wlp3s0",
+        "format-wifi": "{icon} {essid}",
+        "format-disconnected": "Disconnected",
+        "format-icons": [
+        "󰤯",
+        "󰤟",
+        "󰤢",
+        "󰤥",
+        "󰤨",
+        ],
+        "interval": 10
+    },
 	"pulseaudio": {
 		"format": "{icon} {volume:2}%",
 		"format-bluetooth": "{icon}  {volume}%",
@@ -123,19 +135,5 @@
 	},
 	"tray": {
 		"icon-size": 20
-	},
-    "network": {
-        "interface": "wlp3s0",
-        "format": "{essid} ",
-        "format-connected": "{essid} ",
-        "format-disconnected": "Disconnected",
-        "wifi-strength-icons": [
-            "",
-            "",
-            "",
-            "",
-            ""
-        ],
-        "interval": 10
-    }
+	}
 }

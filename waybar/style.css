@@ -57,19 +57,19 @@ window#waybar {
 }
 
 #pulseaudio {
-	color: @maroon;
-}
-#memory {
 	color: @peach;
 }
-#cpu {
+#memory {
 	color: @yellow;
 }
-#battery {
+#cpu {
 	color: @green;
 }
-#disk {
+#battery {
 	color: @blue;
+}
+#disk {
+	color: @mauve;
 }
 
 #clock,
