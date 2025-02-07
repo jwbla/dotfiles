@@ -40,7 +40,7 @@ window#waybar {
 	color: @text;
 }
 #workspaces button.active {
-	color: @red;
+	color: @blue;
 }
 #workspaces button:hover {
 	box-shadow: inherit;
