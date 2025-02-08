@@ -41,6 +41,7 @@ window#waybar {
 }
 #workspaces button.active {
 	color: @blue;
+    font-weight: bold;
 }
 #workspaces button:hover {
 	box-shadow: inherit;
