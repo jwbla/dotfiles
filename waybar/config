@@ -118,6 +118,7 @@
 		},
 		"format-discharging": "{icon} {capacity}%",
 		"format-charging": "󰚥 {icon} {capacity}%",
+        "format-full": "󱟢",
 		"format-icons": [
 			"",
 			"",
