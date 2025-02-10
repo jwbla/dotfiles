@@ -97,6 +97,7 @@
 		"format-icons": {
 			"headphones": "",
 			"default": [
+                "",
 				"",
 				""
 			]
