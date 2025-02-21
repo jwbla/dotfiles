@@ -106,3 +106,9 @@ bindkey '^R' history-incremental-search-backward
 alias inv='nvim $(fzf --preview="batcat --color=always {}")'
 #
 figlet rgtv | lolcat
+
+# Automatically start a new tmux session every time zsh starts
+if [ -z "$TMUX" ]; then
+  tmux new-session -s "session_$(date +%s)"  # Unique session name using current timestamp
+  exit
+fi
