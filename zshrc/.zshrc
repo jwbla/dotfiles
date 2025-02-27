@@ -108,6 +108,6 @@ alias inv='nvim $(fzf --preview="batcat --color=always {}")'
 # Automatically start a new tmux session every time zsh starts
 if [ -z "$TMUX" ]; then
   tmux new-session -s "session_$(date +%s)"  # Unique session name using current timestamp
-  exit
+  # exit
 fi
 figlet rgtv | lolcat
