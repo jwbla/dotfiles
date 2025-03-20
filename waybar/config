@@ -10,13 +10,7 @@
 	],
 	"modules-center": [
 		"custom/left-arrow-dark",
-		"clock#1",
-		"custom/left-arrow-light",
-		"custom/left-arrow-dark",
-		"clock#2",
-		"custom/right-arrow-dark",
-		"custom/right-arrow-light",
-		"clock#3",
+		"clock",
 		"custom/right-arrow-dark"
 	],
 	"modules-right": [
@@ -62,17 +56,9 @@
 		"disable-scroll": true,
 		"format": "{name}",
 	},
-	"clock#1": {
-		"format": "{:%a}",
-		"tooltip": false
-	},
-	"clock#2": {
+	"clock": {
 		"format": "{:%H:%M}",
-		"tooltip": false
-	},
-	"clock#3": {
-		"format": "{:%m-%d}",
-		"tooltip": false
+		"tooltip-format": "{:%A, %B %d, %Y}"
 	},
     "network": {
         "interface": "wlp3s0",
