@@ -20,6 +20,7 @@ window#waybar {
 #disk,
 #tray {
 	background: @base;
+    border: 2px solid @surface0;
     padding: 0 .5rem;
     margin: .25rem;
     border-radius: 20px;
@@ -37,6 +38,7 @@ window#waybar {
 	color: @blue;
     border-radius: 20px;
     font-weight: bold;
+    box-shadow: @blue 0px 4px 8px;
 }
 #workspaces button:hover {
     padding: 0 .5rem;
@@ -44,6 +46,7 @@ window#waybar {
 	box-shadow: inherit;
     border-radius: 20px;
 	text-shadow: inherit;
+    color: @red;
     background: @base;
     border: @base;
 }
