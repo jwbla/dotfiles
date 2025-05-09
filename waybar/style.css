@@ -6,18 +6,8 @@
 }
 
 window#waybar {
-	background: @surface0;
+    background: transparent;
 	color: @text;
-}
-
-#custom-right-arrow-dark,
-#custom-left-arrow-dark {
-	color: @base;
-}
-#custom-right-arrow-light,
-#custom-left-arrow-light {
-	color: @surface0;
-	background: @base;
 }
 
 #workspaces,
@@ -30,23 +20,30 @@ window#waybar {
 #disk,
 #tray {
 	background: @base;
-    padding: 0 2px;
+    padding: 0 .5rem;
+    margin: .25rem;
+    border-radius: 20px;
 }
 
 #workspaces button {
-	padding: 0 2px;
+	padding: 0 .5rem;
+    margin: .25rem;
+    border-radius: 20px;
 	color: @text;
 }
 #workspaces button.active {
 	color: @blue;
+    border-radius: 20px;
     font-weight: bold;
 }
 #workspaces button:hover {
 	box-shadow: inherit;
+    border-radius: 20px;
 	text-shadow: inherit;
 }
 #workspaces button:hover {
 	background: @base;
+    border-radius: 20px;
 	border: @base;
 	padding: 0 3px;
 }
@@ -78,5 +75,6 @@ window#waybar {
 #battery,
 #network,
 #disk {
+    border-radius: 20px;
 	padding: 0 10px;
 }
