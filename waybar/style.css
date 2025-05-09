@@ -1,7 +1,7 @@
 @import "mocha.css";
 
 * {
-	font-size: 20px;
+	font-size: 24px;
 	font-family: UbuntuMonoNerdFont;
 }
 
@@ -32,20 +32,20 @@ window#waybar {
 	color: @text;
 }
 #workspaces button.active {
+    padding: 0 .5rem;
+    margin: .25rem;
 	color: @blue;
     border-radius: 20px;
     font-weight: bold;
 }
 #workspaces button:hover {
+    padding: 0 .5rem;
+    margin: .25rem;
 	box-shadow: inherit;
     border-radius: 20px;
 	text-shadow: inherit;
-}
-#workspaces button:hover {
-	background: @base;
-    border-radius: 20px;
-	border: @base;
-	padding: 0 3px;
+    background: @base;
+    border: @base;
 }
 
 #network {
