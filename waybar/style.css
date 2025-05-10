@@ -22,19 +22,17 @@ window#waybar {
 	background: @base;
     border: 2px solid @surface0;
     padding: 0 .5rem;
-    margin: .25rem;
+    margin: 0 .5rem;
     border-radius: 20px;
 }
 
 #workspaces button {
 	padding: 0 .5rem;
-    margin: .25rem;
+    margin: 0 .5rem;
     border-radius: 20px;
 	color: @text;
 }
 #workspaces button.active {
-    padding: 0 .5rem;
-    margin: .25rem;
 	color: @blue;
     border-radius: 20px;
     font-weight: bold;
@@ -42,8 +40,6 @@ window#waybar {
     box-shadow: 2px 2px 5px 0px @blue, -2px -2px 5px 0px @blue;
 }
 #workspaces button:hover {
-    padding: 0 .5rem;
-    margin: .25rem;
 	box-shadow: inherit;
     border-radius: 20px;
 	text-shadow: inherit;
