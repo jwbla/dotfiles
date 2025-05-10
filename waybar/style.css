@@ -53,7 +53,7 @@ window#waybar {
     box-shadow: 2px 2px 5px 0px @blue, -2px -2px 5px 0px @blue;
 }
 #workspaces button:hover {
-    color: @red;
+    color: @green;
 }
 
 #network {

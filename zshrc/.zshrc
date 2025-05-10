@@ -107,7 +107,13 @@ alias inv='nvim $(fzf --preview="batcat --color=always {}")'
 
 # Automatically start a new tmux session every time zsh starts
 if [ -z "$TMUX" ]; then
-  tmux new-session -s "session_$(date +%s)"  # Unique session name using current timestamp
+    hostname=$(hostname)
+    i=0
+    while tmux has-session -t "${hostname}_$i" 2>/dev/null; do
+        ((i++))
+    done
+
+  tmux new-session -s "${hostname}_$i"
   # exit
 fi
 figlet rgtv | lolcat
