@@ -19,6 +19,7 @@ stow waybar -t ~/.config/waybar waybar
 stow kitty -t ~/.config/kitty kitty
 stow alacritty -t ~/.config/alacritty alacritty
 stow wofi -t ~/.config/wofi wofi
+stow ghostty -t ~/.config/ghostty ghostty
 
 stow tmux_conf -t ~ tmux_conf
 stow zshrc -t ~ zshrc
