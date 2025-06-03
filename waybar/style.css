@@ -6,7 +6,7 @@
 }
 
 window#waybar {
-    background: transparent;
+    background: #241f31;
 	color: @text;
 }
 
@@ -18,14 +18,16 @@ window#waybar {
 #network,
 #battery,
 #disk,
+#window,
 #tray {
-	background: @base;
+	background: #241f31;
     border: 2px solid @surface0;
-    padding: .25rem .5rem;
+    padding: .5rem .5rem;
     margin: .5rem .5rem;
     border-radius: 20px;
+    box-shadow: 4px 4px 6px #13111a,
+        -4px -4px 6px #352d48
 }
-
 
 #clock:hover,
 #pulseaudio:hover,
@@ -35,19 +37,16 @@ window#waybar {
 #battery:hover,
 #disk:hover,
 #tray:hover {
-    background: transparent;
-    box-shadow: 1px 1px 2px 0px @blue, -1px -1px 2px 0px @blue;
 }
 
 #workspaces button {
 	padding: 0 .5rem;
     margin: 0 .5rem;
-    border-radius: 20px;
+    border-radius: 50px;
 	color: @text;
 }
 #workspaces button.active {
 	color: @blue;
-    border-radius: 20px;
     font-weight: bold;
     /* box-shadow: @blue 0px 4px 4px; */
     box-shadow: 2px 2px 5px 0px @blue, -2px -2px 5px 0px @blue;
@@ -82,6 +81,7 @@ window#waybar {
 #cpu,
 #battery,
 #network,
+#window
 #disk {
     border-radius: 20px;
 	padding: 0 .5rem;
