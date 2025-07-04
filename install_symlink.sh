@@ -11,6 +11,7 @@ mkdir ~/.config/waybar
 mkdir ~/.config/kitty
 mkdir ~/.config/alacritty
 mkdir ~/.config/wofi
+mkdir ~/.config/ghostty
 
 echo Creating symlinks with stow...
 
