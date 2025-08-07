@@ -1,9 +1,15 @@
 hide_scroll=true
 mode=run
-width=25%
-lines=10
+width=45%
+lines=15
 line_wrap=word
 term=foot
 location=center
 allow_images=true
 key_expand=Right
+orientation=vertical
+content_halign=fill
+drun-display_generic=true
+allow_markup=true
+
+
