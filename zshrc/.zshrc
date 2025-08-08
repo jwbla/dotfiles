@@ -26,7 +26,7 @@ ZSH_THEME="agnoster"
 
 # Uncomment one of the following lines to change the auto-update behavior
 # zstyle ':omz:update' mode disabled  # disable automatic updates
-zstyle ':omz:update' mode auto      # update automatically without asking
+# zstyle ':omz:update' mode auto      # update automatically without asking
 # zstyle ':omz:update' mode reminder  # just remind me to update when it's time
 
 # Uncomment the following line to change how often to auto-update (in days).
@@ -106,14 +106,14 @@ bindkey '^R' history-incremental-search-backward
 alias inv='nvim $(fzf --preview="batcat --color=always {}")'
 
 # Automatically start a new tmux session every time zsh starts
-if [ -z "$TMUX" ]; then
-    hostname=$(hostname)
-    i=0
-    while tmux has-session -t "${hostname}_$i" 2>/dev/null; do
-        ((i++))
-    done
-
-  tmux new-session -s "${hostname}_$i"
-  # exit
-fi
+# if [ -z "$TMUX" ]; then
+#     hostname=$(hostname)
+#     i=0
+#     while tmux has-session -t "${hostname}_$i" 2>/dev/null; do
+#         ((i++))
+#     done
+#
+#   tmux new-session -s "${hostname}_$i"
+#   # exit
+# fi
 figlet rgtv | lolcat
