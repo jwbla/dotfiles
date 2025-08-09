@@ -36,7 +36,7 @@ window#waybar {
 #disk:hover,
 #tray:hover {
     background: transparent;
-    box-shadow: 1px 1px 2px 0px @blue, -1px -1px 2px 0px @blue;
+    box-shadow: 1px 1px 2px 0px @secondary, -1px -1px 2px 0px @primary;
 }
 
 #workspaces button {
@@ -50,10 +50,10 @@ window#waybar {
     border-radius: 20px;
     font-weight: bold;
     /* box-shadow: @blue 0px 4px 4px; */
-    box-shadow: 2px 2px 5px 0px @blue, -2px -2px 5px 0px @blue;
+    box-shadow: 2px 2px 5px 0px @secondary, -2px -2px 5px 0px @primary;
 }
 #workspaces button:hover {
-    color: @green;
+    color: @secondary;
 }
 
 #network {

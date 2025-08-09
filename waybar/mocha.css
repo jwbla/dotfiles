@@ -24,3 +24,8 @@
 @define-color base #1e1e2e;
 @define-color mantle #181825;
 @define-color crust #11111b;
+
+@define-color primary #ac4fc6;
+@define-color secondary #ff007f;
+/* @define-color primary #ba98f5; */
+/* @define-color secondary #8bfa37; */
