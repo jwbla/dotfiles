@@ -105,6 +105,11 @@ bindkey '^R' history-incremental-search-backward
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 alias inv='nvim $(fzf --preview="batcat --color=always {}")'
 
+# Load kz function
+if [[ -f "$HOME/.kz.sh" ]]; then
+    source "$HOME/.kz.sh"
+fi
+
 # Automatically start a new tmux session every time zsh starts
 # if [ -z "$TMUX" ]; then
 #     hostname=$(hostname)
