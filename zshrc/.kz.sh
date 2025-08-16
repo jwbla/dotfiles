@@ -30,9 +30,12 @@ kz() {
         lint)
             uv run tasks/lint_fix.py
             ;;
+        build:android)
+            uv run tasks/build-android.py
+            ;;
         *)
             echo "Unknown command: $1"
-            echo "Usage: kz [build|lint]"
+            echo "Usage: kz [build|lint|build:android]"
             cd "$orig_dir"
             return 1
             ;;
