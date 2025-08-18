@@ -25,7 +25,7 @@ kz() {
     # Dispatch based on first argument
     case "$1" in
         build|"")
-            uv run build.py
+            uv run tasks/build.py
             ;;
         lint)
             uv run tasks/lint_fix.py
@@ -33,9 +33,15 @@ kz() {
         build:android)
             uv run tasks/build-android.py
             ;;
+        clean)
+            uv run tasks/nuke.py
+            ;;
+        prebuild:bgfx)
+            uv run tasks/prebuild_bgfx.py
+            ;;
         *)
             echo "Unknown command: $1"
-            echo "Usage: kz [build|lint|build:android]"
+            echo "Usage: kz [build|build:android|prebuild:bgfx|lint|clean]"
             cd "$orig_dir"
             return 1
             ;;
