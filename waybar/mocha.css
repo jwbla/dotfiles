@@ -25,7 +25,16 @@
 @define-color mantle #181825;
 @define-color crust #11111b;
 
+
+/* https://mdigi.tools/color-shades/#ac4fc6 */
+
+@define-color lightest-primary #edd8f3;
+@define-color light-primary #c88bda;
 @define-color primary #ac4fc6;
+@define-color dark-primary #622574;
+@define-color lightest-secondary #ffcce5;
+@define-color light-secondary #ff66b2;
 @define-color secondary #ff007f;
+@define-color dark-secondary #99004c;
 /* @define-color primary #ba98f5; */
 /* @define-color secondary #8bfa37; */

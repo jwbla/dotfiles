@@ -57,23 +57,23 @@ window#waybar {
 }
 
 #network {
-    color: @red;
+    color: @primary;
 }
 
 #pulseaudio {
-	color: @peach;
+	color: @light-primary;
 }
 #memory {
-	color: @yellow;
+    color: @lightest-primary;
 }
 #cpu {
-	color: @green;
+    color: @lightest-secondary;
 }
 #battery {
-	color: @blue;
+	color: @light-secondary;
 }
 #disk {
-	color: @mauve;
+    color: @secondary;
 }
 
 #clock,
