@@ -24,7 +24,11 @@ kz() {
 
     # Dispatch based on first argument
     case "$1" in
-        build|"")
+        "")
+            echo "Usage: kz task:target"
+            echo "kz build|build:android|clean|prebuild:bgfx"
+            ;;
+        build)
             uv run tasks/build.py
             ;;
         lint)
