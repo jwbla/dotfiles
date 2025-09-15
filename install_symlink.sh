@@ -1,29 +1,46 @@
 
 #!/bin/bash
 
-# this should be run from the repository!!!
+echo "📦 Installing config with symlinks..."
 
-echo Installing config with symlinks...
+echo "📁 Creating directories in ~/.config"
+mkdir -p ~/.config/hypr
+mkdir -p ~/.config/waybar
+mkdir -p ~/.config/kitty
+mkdir -p ~/.config/alacritty
+mkdir -p ~/.config/wofi
+mkdir -p ~/.config/ghostty
+mkdir -p ~/.config/starship
 
-echo Creating dirs in ~/.config
-mkdir ~/.config/hypr
-mkdir ~/.config/waybar
-mkdir ~/.config/kitty
-mkdir ~/.config/alacritty
-mkdir ~/.config/wofi
-mkdir ~/.config/ghostty
-mkdir ~/.config/starship
+echo "🔗 Creating symlinks with stow..."
 
-echo Creating symlinks with stow...
+# Function to safely run stow commands with error checking
+run_stow_install() {
+    local package="$1"
+    local target="$2"
+    local description="$3"
+    
+    echo "  Installing $description..."
+    if stow -t "$target" "$package" >/dev/null 2>&1; then
+        echo "  ✅ Successfully installed $description"
+    else
+        echo "  ❌ Failed to install $description"
+        return 1
+    fi
+}
 
-stow hypr -t ~/.config/hypr hypr
-stow waybar -t ~/.config/waybar waybar
-stow kitty -t ~/.config/kitty kitty
-stow alacritty -t ~/.config/alacritty alacritty
-stow wofi -t ~/.config/wofi wofi
-stow ghostty -t ~/.config/ghostty ghostty
-stow starship -t ~/.config/starship starship
+# Install config directory symlinks
+run_stow_install "hypr" "$HOME/.config/hypr" "hypr config"
+run_stow_install "waybar" "$HOME/.config/waybar" "waybar config"
+run_stow_install "kitty" "$HOME/.config/kitty" "kitty config"
+run_stow_install "alacritty" "$HOME/.config/alacritty" "alacritty config"
+run_stow_install "wofi" "$HOME/.config/wofi" "wofi config"
+run_stow_install "ghostty" "$HOME/.config/ghostty" "ghostty config"
+run_stow_install "starship" "$HOME/.config" "starship config"
 
-stow tmux_conf -t ~ tmux_conf
-stow zshrc -t ~ zshrc
-stow rgtv_env -t ~ rgtv_env
+# Install home directory symlinks
+run_stow_install "tmux_conf" "$HOME" "tmux config"
+run_stow_install "zshrc" "$HOME" "zsh config"
+run_stow_install "rgtv_env" "$HOME" "rgtv environment"
+
+echo "✅ Config installation complete."

@@ -8,20 +8,38 @@ if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
     exit 1
 fi
 
-echo "Removing config symlinks using stow..."
+echo "🗑️  Removing config symlinks using stow..."
 
-stow -D -d ~/dev/dotfiles -t ~/.config hypr
-stow -D -d ~/dev/dotfiles -t ~/.config waybar
-stow -D -d ~/dev/dotfiles -t ~/.config kitty
-stow -D -d ~/dev/dotfiles -t ~/.config alacritty
-stow -D -d ~/dev/dotfiles -t ~/.config wofi
-stow -D -d ~/dev/dotfiles -t ~/.config starship
-stow -D -d ~/dev/dotfiles -t ~ ~/.config/ghostty
-stow -D -d ~/dev/dotfiles -t ~ .tmux.conf
-stow -D -d ~/dev/dotfiles -t ~ .zshrc
-stow -D -d ~/dev/dotfiles -t ~ .rgtv.env
+# Function to safely run stow commands with error checking
+run_stow_uninstall() {
+    local package="$1"
+    local target="$2"
+    local description="$3"
+    
+    echo "  Removing $description..."
+    if stow -D -t "$target" "$package" >/dev/null 2>&1; then
+        echo "  ✅ Successfully removed $description"
+    else
+        echo "  ⚠️  Warning: $description may not have been installed or already removed"
+    fi
+}
 
-# Optional: Remove empty directories in ~/.config
-find ~/.config -type d -empty -delete
+# Remove config directory symlinks (matching install script structure)
+run_stow_uninstall "hypr" "$HOME/.config/hypr" "hypr config"
+run_stow_uninstall "waybar" "$HOME/.config/waybar" "waybar config"
+run_stow_uninstall "kitty" "$HOME/.config/kitty" "kitty config"
+run_stow_uninstall "alacritty" "$HOME/.config/alacritty" "alacritty config"
+run_stow_uninstall "wofi" "$HOME/.config/wofi" "wofi config"
+run_stow_uninstall "ghostty" "$HOME/.config/ghostty" "ghostty config"
+run_stow_uninstall "starship" "$HOME/.config" "starship config"
+
+# Remove home directory symlinks
+run_stow_uninstall "tmux_conf" "$HOME" "tmux config"
+run_stow_uninstall "zshrc" "$HOME" "zsh config"
+run_stow_uninstall "rgtv_env" "$HOME" "rgtv environment"
+
+# Remove empty directories in ~/.config
+echo "🧹 Cleaning up empty directories..."
+find "$HOME/.config" -type d -empty -delete 2>/dev/null || true
 
 echo "✅ Config uninstallation complete."
