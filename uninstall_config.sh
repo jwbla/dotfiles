@@ -15,6 +15,7 @@ stow -D -d ~/dev/dotfiles -t ~/.config waybar
 stow -D -d ~/dev/dotfiles -t ~/.config kitty
 stow -D -d ~/dev/dotfiles -t ~/.config alacritty
 stow -D -d ~/dev/dotfiles -t ~/.config wofi
+stow -D -d ~/dev/dotfiles -t ~/.config starship
 stow -D -d ~/dev/dotfiles -t ~ ~/.config/ghostty
 stow -D -d ~/dev/dotfiles -t ~ .tmux.conf
 stow -D -d ~/dev/dotfiles -t ~ .zshrc

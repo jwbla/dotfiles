@@ -12,6 +12,7 @@ mkdir ~/.config/kitty
 mkdir ~/.config/alacritty
 mkdir ~/.config/wofi
 mkdir ~/.config/ghostty
+mkdir ~/.config/starship
 
 echo Creating symlinks with stow...
 
@@ -21,6 +22,7 @@ stow kitty -t ~/.config/kitty kitty
 stow alacritty -t ~/.config/alacritty alacritty
 stow wofi -t ~/.config/wofi wofi
 stow ghostty -t ~/.config/ghostty ghostty
+stow starship -t ~/.config/starship starship
 
 stow tmux_conf -t ~ tmux_conf
 stow zshrc -t ~ zshrc
