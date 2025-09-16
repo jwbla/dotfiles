@@ -18,6 +18,7 @@ window#waybar {
 #network,
 #battery,
 #disk,
+#custom-weather,
 #tray {
 	background: @base;
     border: 2px solid @surface0;
@@ -34,6 +35,7 @@ window#waybar {
 #network:hover,
 #battery:hover,
 #disk:hover,
+#custom-weather:hover,
 #tray:hover {
     background: transparent;
     box-shadow: 1px 1px 2px 0px @secondary, -1px -1px 2px 0px @primary;
@@ -57,22 +59,25 @@ window#waybar {
     color: @secondary;
 }
 #network {
-    color: @primary;
+    color: @red;
 }
 #pulseaudio {
-	color: @light-primary;
+	color: @peach;
 }
 #memory {
-    color: @lightest-primary;
+    color: @yellow;
 }
 #cpu {
-    color: @lightest-secondary;
+    color: @green;
 }
 #battery {
-	color: @light-secondary;
+	color: @sapphire
 }
 #disk {
-    color: @secondary;
+    color: @mauve;
+}
+#custom-weather {
+    color: @lavender;
 }
 
 #clock,
@@ -81,7 +86,8 @@ window#waybar {
 #cpu,
 #battery,
 #network,
-#disk {
+#disk,
+#custom-weather {
     border-radius: 20px;
 	padding: 0 .5rem;
 }

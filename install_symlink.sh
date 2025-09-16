@@ -38,6 +38,14 @@ run_stow_install "wofi" "$HOME/.config/wofi" "wofi config"
 run_stow_install "ghostty" "$HOME/.config/ghostty" "ghostty config"
 run_stow_install "starship" "$HOME/.config" "starship config"
 
+# Additional symlinks that stow doesn't handle
+echo "  Installing waybar weather script..."
+if ln -sf "$(pwd)/waybar/weather.sh" "$HOME/.config/waybar/weather.sh" 2>/dev/null; then
+    echo "  ✅ Successfully installed waybar weather script"
+else
+    echo "  ❌ Failed to install waybar weather script"
+fi
+
 # Install home directory symlinks
 run_stow_install "tmux_conf" "$HOME" "tmux config"
 run_stow_install "zshrc" "$HOME" "zsh config"

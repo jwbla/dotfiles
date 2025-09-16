@@ -17,6 +17,7 @@
 		"cpu",
 		"battery",
 		"disk",
+		"custom/weather",
 		"tray"
 	],
 
@@ -112,5 +113,11 @@
 	"tray": {
 		"icon-size": 26,
         "spacing": 5
+	},
+	"custom/weather": {
+		"exec": "~/.config/waybar/weather.sh",
+		"interval": 300,
+		"format": "{}",
+		"return-type": "json"
 	}
 }
