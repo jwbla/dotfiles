@@ -110,6 +110,11 @@ if [[ -f "$HOME/.kz.sh" ]]; then
     source "$HOME/.kz.sh"
 fi
 
+# Load hof script
+if [[ -f "$HOME/.hof.sh" ]]; then
+    source "$HOME/.hof.sh"
+fi
+
 # Automatically start a new tmux session every time zsh starts
 # if [ -z "$TMUX" ]; then
 #     hostname=$(hostname)
