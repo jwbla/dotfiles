@@ -116,7 +116,7 @@
 	},
 	"custom/weather": {
 		"exec": "~/.config/waybar/weather.sh",
-		"interval": 300,
+		"interval": 3600,
 		"format": "{}",
 		"return-type": "json"
 	}
