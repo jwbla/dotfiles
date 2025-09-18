@@ -4,14 +4,11 @@
 
 ### to install (in tmux)
 ```
-cp .tmux.conf ~/.tmux.conf
-```
-```
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 ```
 in tmux
 ```
-ctrl+a I
+ctrl+b I
 ```
 
 ## nerdfont
@@ -23,12 +20,6 @@ unzip to ~/.fonts
 
 ```
 fc-cache -fv
-```
-
-## alacritty
-
-```
-cp alacritty.toml ~/.config/alacritty
 ```
 
 ## Other Stuff
