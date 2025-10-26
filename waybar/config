@@ -15,7 +15,7 @@
         "custom/weather",
 		"tray"
 	],
-"hyprland/workspaces": {
+    "hyprland/workspaces": {
 		"disable-scroll": true,
 		"format": "{name}",
 	},
@@ -51,7 +51,7 @@
 			]
 		},
 		"scroll-step": 5,
-		"on-click": "pamixer -t",
+		"on-click": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
 		"on-click-right": "pavucontrol",
         "tooltip-format": "{volume}%"
 	},
