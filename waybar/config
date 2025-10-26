@@ -30,7 +30,7 @@
 		"tooltip-format": "{:%A, %B %d, %Y}"
 	},
     "network": {
-        "interface": "wlp3s0",
+        "interface": "wlan0",
         "format-wifi": "{icon} {essid}",
         "format-ethernet": " eth",
         "format-disconnected": "󰤮 offline",
@@ -48,11 +48,10 @@
 	"pulseaudio": {
 		"format": "{icon} {volume:2}%",
 		"format-bluetooth": " {icon}  {volume}%",
-		"format-muted": "MUTE",
+		"format-muted": "",
 		"format-icons": {
 			"headphones": "",
 			"default": [
-                "",
 				"",
 				""
 			]
