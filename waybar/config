@@ -15,8 +15,7 @@
         "custom/weather",
 		"tray"
 	],
-
-	"hyprland/workspaces": {
+"hyprland/workspaces": {
 		"disable-scroll": true,
 		"format": "{name}",
 	},

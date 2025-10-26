@@ -53,7 +53,7 @@ window#waybar {
 }
 
 #workspaces button {
-	padding: 0 .5rem;
+	padding: 0 .125rem;
     margin: 0 .25rem;
 	color: @text;
 }
@@ -64,4 +64,10 @@ window#waybar {
 #workspaces button:hover label {
     background: transparent;
     color: @lavender;
+}
+#battery.warning {
+    color: @yellow;
+}
+#battery.critical {
+    color: @red;
 }
