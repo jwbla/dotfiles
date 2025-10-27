@@ -11,9 +11,9 @@
         "network",
 		"pulseaudio",
 		"battery",
-        "clock",
         "custom/weather",
-		"tray"
+        "tray",
+        "clock"
 	],
     "hyprland/workspaces": {
 		"disable-scroll": true,
