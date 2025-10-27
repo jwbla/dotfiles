@@ -93,7 +93,7 @@
         "tooltip-format": "{capacity}%",
 	},
 	"tray": {
-		"icon-size": 26,
+		"icon-size": 18,
         "spacing": 5
 	},
 	"custom/weather": {
