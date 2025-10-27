@@ -11,4 +11,5 @@ orientation=vertical
 content_halign=fill
 drun-display_generic=true
 allow_markup=true
+prompt=Program Finder
 
