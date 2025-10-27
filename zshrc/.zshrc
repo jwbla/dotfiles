@@ -4,6 +4,7 @@
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 export PROMPT='%m:%~ %n %# '
+export PATH=~/.local/bin:$PATH
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
@@ -71,7 +72,7 @@ export PROMPT='%m:%~ %n %# '
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git z)
+plugins=(git)
 
 source $ZSH/oh-my-zsh.sh
 source ~/.rgtv.env
@@ -128,3 +129,4 @@ fi
 # fi
 figlet rgtv | lolcat
 eval "$(starship init zsh)"
+eval "$(zoxide init zsh)"
