@@ -105,6 +105,7 @@ bindkey '^R' history-incremental-search-backward
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 alias inv='nvim $(fzf --preview="bat --color=always {}")'
+alias nv=nvim
 
 # Load kz function
 if [[ -f "$HOME/.kz.sh" ]]; then
