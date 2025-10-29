@@ -91,6 +91,8 @@
             ],
         },
         "tooltip-format": "{capacity}%",
+        "tooltip-format-charging": "{capacity}% ({timeUntilFull})",
+        "tooltip-format-discharging": "{capacity}% ({time})",
 	},
 	"tray": {
 		"icon-size": 18,
