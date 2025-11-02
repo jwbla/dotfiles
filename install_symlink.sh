@@ -41,6 +41,5 @@ run_stow_install "starship" "$HOME/.config" "starship config"
 # Install home directory symlinks
 run_stow_install "tmux_conf" "$HOME" "tmux config"
 run_stow_install "zshrc" "$HOME" "zsh config"
-run_stow_install "rgtv_env" "$HOME" "rgtv environment"
 
 echo "✅ Config installation complete."

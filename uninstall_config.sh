@@ -36,7 +36,6 @@ run_stow_uninstall "starship" "$HOME/.config" "starship config"
 # Remove home directory symlinks
 run_stow_uninstall "tmux_conf" "$HOME" "tmux config"
 run_stow_uninstall "zshrc" "$HOME" "zsh config"
-run_stow_uninstall "rgtv_env" "$HOME" "rgtv environment"
 
 # Remove empty directories in ~/.config
 echo "🧹 Cleaning up empty directories..."
