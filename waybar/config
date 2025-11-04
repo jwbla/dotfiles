@@ -91,7 +91,7 @@
             ],
         },
         "tooltip-format": "{capacity}%",
-        "tooltip-format-charging": "{capacity}% ({timeUntilFull})",
+        "tooltip-format-charging": "{capacity}% ({time})",
         "tooltip-format-discharging": "{capacity}% ({time})",
 	},
 	"tray": {
