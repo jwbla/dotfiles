@@ -107,6 +107,7 @@ bindkey '^R' history-incremental-search-backward
 alias inv='nvim $(fzf --preview="bat --color=always {}")'
 alias nv=nvim
 alias n=nvim
+alias nb=newsboat
 
 # Load kz function
 if [[ -f "$HOME/.kz.sh" ]]; then
