@@ -107,7 +107,7 @@ bindkey '^R' history-incremental-search-backward
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 alias inv='nvim $(fzf --preview="bat --color=always {}")'
 alias nv=nvim
-alias n=nvim
+alias n='nvim .'
 alias nb='newsboat -r'
 
 # Load kz function
