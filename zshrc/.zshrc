@@ -28,7 +28,7 @@ export BROWSER=librewolf
 
 # Uncomment one of the following lines to change the auto-update behavior
 # zstyle ':omz:update' mode disabled  # disable automatic updates
-# zstyle ':omz:update' mode auto      # update automatically without asking
+zstyle ':omz:update' mode auto      # update automatically without asking
 # zstyle ':omz:update' mode reminder  # just remind me to update when it's time
 
 # Uncomment the following line to change how often to auto-update (in days).
@@ -109,6 +109,10 @@ alias inv='nvim $(fzf --preview="bat --color=always {}")'
 alias nv=nvim
 alias n='nvim .'
 alias nb='newsboat -r'
+alias t=tmux
+alias tks='tmux kill-server'
+alias ta='tmux a'
+alias tat='tmux a -t'
 
 # Load kz function
 if [[ -f "$HOME/.kz.sh" ]]; then
