@@ -51,12 +51,12 @@ for i in $(seq 0 $((MAX_DAYS - 1))); do
     if [ -n "$FORECAST" ]; then
         FORECAST="${FORECAST}\n"
     fi
-    FORECAST="${FORECAST}${FORMATTED_DATE}: ${MIN_TEMP}°F / ${MAX_TEMP}°F - ${DAY_CONDITION}"
+    FORECAST="${FORECAST}<span color='#b4befe'>${FORMATTED_DATE}</span>: ${MIN_TEMP}°F / ${MAX_TEMP}°F - ${DAY_CONDITION}"
 done
 
 # Format output for Waybar
 TEXT="$ICON ${TEMP}°F"
-TOOLTIP="📍 $LOCATION: $CONDITION\n"
+TOOLTIP="📍 <span color='#b4befe'>$LOCATION</span>: $CONDITION\n"
 TOOLTIP="${TOOLTIP}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 TOOLTIP="${TOOLTIP}📅 3-Day Forecast:\n"
 TOOLTIP="${TOOLTIP}${FORECAST}"
