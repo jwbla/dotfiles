@@ -17,26 +17,6 @@ TEMP=$(echo "$WEATHER_DATA" | jq -r '.current_condition[0].temp_F // "N/A"' 2>/d
 CONDITION=$(echo "$WEATHER_DATA" | jq -r '.current_condition[0].weatherDesc[0].value // "Unknown"' 2>/dev/null)
 LOCATION=$(echo "$WEATHER_DATA" | jq -r '.nearest_area[0].areaName[0].value // "Unknown"' 2>/dev/null)
 
-# Extract sunrise and sunset times
-SUNRISE_RAW=$(echo "$WEATHER_DATA" | jq -r '.current_condition[0].sunrise // "N/A"' 2>/dev/null)
-SUNSET_RAW=$(echo "$WEATHER_DATA" | jq -r '.current_condition[0].sunset // "N/A"' 2>/dev/null)
-
-# Format sunrise/sunset times (convert from HHmm to HH:MM)
-format_time() {
-    local time_str=$1
-    if [ "$time_str" != "N/A" ] && [ -n "$time_str" ]; then
-        # Extract hours and minutes (format is HHmm)
-        local hours="${time_str:0:2}"
-        local minutes="${time_str:2:2}"
-        echo "${hours}:${minutes}"
-    else
-        echo "N/A"
-    fi
-}
-
-SUNRISE=$(format_time "$SUNRISE_RAW")
-SUNSET=$(format_time "$SUNSET_RAW")
-
 # Weather icons based on condition
 case "$CONDITION" in
     *"Sunny"*|*"Clear"*) ICON="☀️" ;;
@@ -77,9 +57,8 @@ done
 # Format output for Waybar
 TEXT="$ICON ${TEMP}°F"
 TOOLTIP="📍 $LOCATION: $CONDITION\n"
-TOOLTIP="${TOOLTIP}🌅 Sunrise: $SUNRISE  |  🌇 Sunset: $SUNSET\n"
 TOOLTIP="${TOOLTIP}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-TOOLTIP="${TOOLTIP}📅 5-Day Forecast:\n"
+TOOLTIP="${TOOLTIP}📅 3-Day Forecast:\n"
 TOOLTIP="${TOOLTIP}${FORECAST}"
 
 # Escape newlines and quotes for JSON
