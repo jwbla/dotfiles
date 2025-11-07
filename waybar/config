@@ -21,7 +21,18 @@
 	},
 	"clock": {
 		"format": "{:%H:%M}",
-		"tooltip-format": "{:%A, %B %d, %Y}"
+		"tooltip-format": "<span> {calendar} </span> ",
+        "calendar": {
+            "mode": "month",
+            "weeks-pos": "left",
+            "format": {
+                "months": "<span color='#f38ba8'><b>{}</b></span>",
+                "days": "<span color='#cdd6f4'><b>{}</b></span>",
+                "weekdays": "<span color='#a6e3a1'><b>{}</b></span>",
+                "today": "<span color='#f9e2af'><b>{}</b></span>",
+                "weeks": "<span color='#89b4fa'><b>{}</b></span>"
+            }
+        }
 	},
     "network": {
         "interface": "wlan0",
