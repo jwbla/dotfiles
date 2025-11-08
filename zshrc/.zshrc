@@ -76,7 +76,6 @@ zstyle ':omz:update' mode auto      # update automatically without asking
 plugins=(git)
 
 source $ZSH/oh-my-zsh.sh
-source ~/.rgtv.env
 bindkey -v
 bindkey '^R' history-incremental-search-backward
 
@@ -114,9 +113,8 @@ alias tks='tmux kill-server'
 alias ta='tmux a'
 alias tat='tmux a -t'
 
-# Load kz function
-if [[ -f "$HOME/.kz.sh" ]]; then
-    source "$HOME/.kz.sh"
+if [ -d "$HOME/.rgtv" ]; then
+    source "$HOME/.rgtv/.rgtv.sh"
 fi
 
 # Load hof script
@@ -124,17 +122,5 @@ if [[ -f "$HOME/.hof.sh" ]]; then
     source "$HOME/.hof.sh"
 fi
 
-# Automatically start a new tmux session every time zsh starts
-# if [ -z "$TMUX" ]; then
-#     hostname=$(hostname)
-#     i=0
-#     while tmux has-session -t "${hostname}_$i" 2>/dev/null; do
-#         ((i++))
-#     done
-#
-#   tmux new-session -s "${hostname}_$i"
-#   # exit
-# fi
-figlet rgtv | lolcat
 eval "$(starship init zsh)"
 eval "$(zoxide init zsh)"
