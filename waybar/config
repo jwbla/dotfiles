@@ -68,8 +68,8 @@
 	},
 	"battery": {
 		"states": {
-			"warning": 40,
-			"critical": 25
+			"warning": 30,
+			"critical": 15
 		},
 		"format-discharging": "{icon}",
 		"format-charging": "{icon}",
