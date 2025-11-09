@@ -1,0 +1,10 @@
+include ~/.newsboat/dark
+show-read-feeds no
+confirm-mark-all-feeds-read no
+confirm-mark-feed-read no
+unbind-key j
+unbind-key k
+bind-key j down
+bind-key k up
+bind-key - quit
+bind-key \ mark-feed-read

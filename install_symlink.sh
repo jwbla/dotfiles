@@ -11,6 +11,7 @@ mkdir -p ~/.config/alacritty
 mkdir -p ~/.config/wofi
 mkdir -p ~/.config/ghostty
 mkdir -p ~/.config/starship
+mkdir -p ~/.newsboat
 
 echo "🔗 Creating symlinks with stow..."
 
@@ -37,6 +38,7 @@ run_stow_install "alacritty" "$HOME/.config/alacritty" "alacritty config"
 run_stow_install "wofi" "$HOME/.config/wofi" "wofi config"
 run_stow_install "ghostty" "$HOME/.config/ghostty" "ghostty config"
 run_stow_install "starship" "$HOME/.config" "starship config"
+run_stow_install ".newsboat" "$HOME/.newsboat" "newsboat config"
 
 # Install home directory symlinks
 run_stow_install "tmux_conf" "$HOME" "tmux config"
