@@ -71,3 +71,6 @@ window#waybar {
 #battery.critical {
     color: @red;
 }
+#battery.full {
+    color: @green;
+}
