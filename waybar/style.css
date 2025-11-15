@@ -13,17 +13,20 @@ window#waybar {
 }
 
 .modules-right {
-    background: @base;
-    border-radius: 20px;
+    /* background: @base; */
+    background: transparent;
+    /* border-radius: 20px; */
 }
 
 .modules-right:hover {
-    background: @base;
-    border-radius: 20px;
+    /* background: @base; */
+    background: transparent;
+    /* border-radius: 20px; */
 }
 .modules-left {
-    background: @base;
-    border-radius: 20px;
+    /* background: @base; */
+    background: transparent;
+    /* border-radius: 20px; */
 }
 
 #workspaces,
