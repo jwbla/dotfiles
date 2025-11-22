@@ -25,7 +25,7 @@ window {
     /* border-style: solid; */
     /* border-radius: 20px; */
     /* background-color: #313244; */
-    background-color: rgba(49, 50, 68, .5)
+    background-color: rgba(49, 50, 68, .75)
 }
 
 #scroll {
@@ -39,12 +39,12 @@ window {
 
 #entry:nth-child(even){
     /* background-color: #3C4053; */
-    background-color: rgba(60,64,83,.5);
+    background-color: rgba(60,64,83,.75);
 }
 
 #entry:selected {
     /* background-color: #6c7086; */
-    background-color: rgba(108, 112, 134, .5)
+    background-color: rgba(108, 112, 134, .75)
 }
 
 #text:selected {
