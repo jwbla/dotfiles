@@ -8,43 +8,28 @@ window {
 }
 
 #input {
-    /* margin: 5px; */
-    /* border: 1px #6c7086; */
-    /* border-style: solid; */
-    /* border-radius: 10px; */
     background-color: #313244;
-    /* background-color: rgba(49, 50, 68, .5) */
     color: #cdd6f4;
     outline-color: #313244;
 }
 
 #outer-box {
-    /* margin: 2px; */
-    /* padding: 10px; */
-    /* border: 1px #6c7086; */
-    /* border-style: solid; */
-    /* border-radius: 20px; */
-    /* background-color: #313244; */
-    background-color: rgba(49, 50, 68, .75)
+    background-color: rgba(49, 50, 68, .85)
 }
 
 #scroll {
-    /* margin: 5px; */
 }
 
 #text {
-    /* padding: 4px; */
     color: #cdd6f4;
 }
 
 #entry:nth-child(even){
-    /* background-color: #3C4053; */
-    background-color: rgba(60,64,83,.75);
+    background-color: rgba(60,64,83,.85);
 }
 
 #entry:selected {
-    /* background-color: #6c7086; */
-    background-color: rgba(108, 112, 134, .75)
+    background-color: rgba(108, 112, 134, .85)
 }
 
 #text:selected {
