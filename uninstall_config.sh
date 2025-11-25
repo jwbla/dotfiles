@@ -36,7 +36,34 @@ run_stow_uninstall "starship" "$HOME/.config" "starship config"
 # Remove home directory symlinks
 run_stow_uninstall "tmux_conf" "$HOME" "tmux config"
 run_stow_uninstall "zshrc" "$HOME" "zsh config"
-run_stow_uninstall ".newsboat" "$HOME" "zsh config"
+
+# Remove newsboat config file symlinks individually
+echo "  Removing newsboat config files..."
+NEWSBOAT_DIR="$HOME/.newsboat"
+for file in config dark urls; do
+    target="$NEWSBOAT_DIR/$file"
+    if [[ -L "$target" ]]; then
+        rm "$target"
+        echo "    ✅ Removed $file"
+    elif [[ -e "$target" ]]; then
+        echo "    ⚠️  $file exists but is not a symlink, skipping..."
+    fi
+done
+echo "  ✅ Successfully removed newsboat config"
+
+# Remove dunst config file symlinks individually
+echo "  Removing dunst config files..."
+DUNST_DIR="$HOME/.config/dunst"
+for file in dunstrc; do
+    target="$DUNST_DIR/$file"
+    if [[ -L "$target" ]]; then
+        rm "$target"
+        echo "    ✅ Removed $file"
+    elif [[ -e "$target" ]]; then
+        echo "    ⚠️  $file exists but is not a symlink, skipping..."
+    fi
+done
+echo "  ✅ Successfully removed dunst config"
 
 # Remove empty directories in ~/.config
 echo "🧹 Cleaning up empty directories..."
