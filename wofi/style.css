@@ -11,6 +11,7 @@ window {
     background-color: #313244;
     color: #cdd6f4;
     outline-color: #313244;
+    padding: 1rem;
 }
 
 #outer-box {
