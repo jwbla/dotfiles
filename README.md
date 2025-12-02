@@ -13,9 +13,7 @@ ctrl+b I
 
 ## nerdfont
 
-```
-https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/UbuntuMono.zip
-```
+pick nerdfont
 unzip to ~/.fonts
 
 ```
