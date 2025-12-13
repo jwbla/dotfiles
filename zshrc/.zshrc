@@ -110,6 +110,7 @@ alias n='nvim .'
 alias nb='newsboat -r'
 alias t=tmux
 alias tks='tmux kill-server'
+alias tns='tmux new -s'
 alias ta='tmux a'
 alias tat='tmux a -t'
 
