@@ -113,6 +113,7 @@ alias tks='tmux kill-server'
 alias tns='tmux new -s'
 alias ta='tmux a'
 alias tat='tmux a -t'
+alias oc=opencode
 
 if [ -d "$HOME/.rgtv" ]; then
     source "$HOME/.rgtv/.rgtv.sh"
@@ -125,3 +126,6 @@ fi
 
 eval "$(starship init zsh)"
 eval "$(zoxide init zsh)"
+
+# opencode
+export PATH=/home/jwbla/.opencode/bin:$PATH
