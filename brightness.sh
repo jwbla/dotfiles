@@ -1,15 +1,30 @@
 #!/bin/bash
 
-# Read current brightness
-CURRENT=$(cat /sys/class/backlight/intel_backlight/brightness)
+BRIGHTNESS_PATH="/sys/class/backlight/intel_backlight"
+CURRENT=$(cat "$BRIGHTNESS_PATH/brightness")
+MAX=$(cat "$BRIGHTNESS_PATH/max_brightness")
+MIN=1
 
-# Add 250 to current brightness
-NEW=$((CURRENT + 250))
+case "$1" in
+    --inc)
+        NEW=$((CURRENT + $2))
+        [ "$NEW" -gt "$MAX" ] && NEW=$MAX
+        ;;
+    --dec)
+        NEW=$((CURRENT - $2))
+        [ "$NEW" -lt "$MIN" ] && NEW=$MIN
+        ;;
+    --max)
+        NEW=$MAX
+        ;;
+    --min)
+        NEW=$MIN
+        ;;
+    *)
+        # Default: cycle brightness
+        NEW=$((CURRENT + 250))
+        [ "$NEW" -gt "$MAX" ] && NEW=250
+        ;;
+esac
 
-# If new value exceeds 1250, set to 250 instead
-if [ "$NEW" -gt 1250 ]; then
-    NEW=250
-fi
-
-# Set the new brightness
-echo "$NEW" | sudo tee /sys/class/backlight/intel_backlight/brightness
+echo "$NEW" | sudo tee "$BRIGHTNESS_PATH/brightness"
