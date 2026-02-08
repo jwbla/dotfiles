@@ -1,84 +1,58 @@
 #!/bin/bash
 
-# Workspace switcher for Hyprland
-# Pipes hyprctl workspaces to wofi and switches to the selected workspace
-# Creates separate entries for each program on a workspace
+# Workspace switcher for Hyprland - simple alt+tab equivalent
+# Pipes window list to wofi and focuses the selected window
 
-# Check if jq is available
-if ! command -v jq &> /dev/null; then
-    echo "Error: jq is required but not installed" >&2
-    exit 1
-fi
+# Check dependencies
+command -v jq &> /dev/null || { echo "Error: jq required" >&2; exit 1; }
+command -v wofi &> /dev/null || { echo "Error: wofi required" >&2; exit 1; }
 
-# Check if wofi is available
-if ! command -v wofi &> /dev/null; then
-    echo "Error: wofi is required but not installed" >&2
-    exit 1
-fi
-
-# Kill any existing wofi instances to ensure only one is open
+# Kill any existing wofi instances
 pkill wofi
 
-# Get current active workspace ID
-current_workspace_id=$(hyprctl activeworkspace -j | jq -r '.id')
+# Get current workspace for indicator
+current_ws=$(hyprctl activeworkspace -j | jq -r '.id')
 
-# Get workspaces and clients, create separate entries for each client
-# Format: workspace_id|window_address|class|title|workspace_name|monitor|is_current
-workspace_list=$(hyprctl workspaces -j | jq -r --argjson clients "$(hyprctl clients -j)" --argjson current "$current_workspace_id" '
-  .[] as $ws |
-  ($clients | map(select(.workspace.id == $ws.id))) as $ws_clients |
-  if ($ws_clients | length) > 0 then
-    $ws_clients[] | "\($ws.id)|\(.address)|\(.class)|\(.title // ""|gsub("\\|"; "│"))|\($ws.name)|\($ws.monitor)|\(if $ws.id == $current then "1" else "0" end)"
-  else
-    "\($ws.id)||empty||\($ws.name)|\($ws.monitor)|\(if $ws.id == $current then "1" else "0" end)"
-  end
+# Build window list with embedded metadata at the end of each line
+# Format shown to user: "▶ Workspace 1 | firefox - My Page"
+# Hidden at end: "	ws_id	address" (tab-separated for easy extraction)
+display_list=$(hyprctl clients -j | jq -r --argjson current "$current_ws" '
+  .[] |
+  select(.workspace.id > 0) |
+  (if .workspace.id == $current then "▶ " else "  " end) as $indicator |
+  (.title // "" | if length > 60 then .[:57] + "..." else . end) as $short_title |
+  "\($indicator)Workspace \(.workspace.id) | \(.class)\(if $short_title != "" then " - " + $short_title else "" end)\t\(.workspace.id)\t\(.address)"
+' | sort -t'|' -k1 -n)
+
+# Add empty workspaces (those with no windows)
+empty_workspaces=$(hyprctl workspaces -j | jq -r --argjson clients "$(hyprctl clients -j)" --argjson current "$current_ws" '
+  .[] |
+  select(.id > 0) |
+  . as $ws |
+  ($clients | map(select(.workspace.id == $ws.id)) | length) as $count |
+  select($count == 0) |
+  (if .id == $current then "▶ " else "  " end) as $indicator |
+  "\($indicator)Workspace \(.id) | (empty)\t\(.id)\t"
 ')
 
-# Format for display with current workspace indicator (without window address)
-display_list=$(echo "$workspace_list" | awk -F'|' '{
-  current_indicator = ($7 == "1") ? "▶ " : "  ";
-  if ($3 == "empty") {
-    printf "%sWorkspace %s: %s | %s | (empty)\n", current_indicator, $1, $5, $6
-  } else {
-    title_part = ($4 != "") ? " - " $4 : "";
-    printf "%sWorkspace %s: %s | %s | %s%s\n", current_indicator, $1, $5, $6, $3, title_part
-  }
-}')
+# Combine and sort
+all_entries=$(printf "%s\n%s" "$display_list" "$empty_workspaces" | grep -v '^$' | sort -t'	' -k2 -n)
 
-# Use wofi to select workspace (with case insensitive search)
-selected=$(echo "$display_list" | wofi --dmenu --insensitive --width=75% --prompt="Select workspace: ")
+# Pass to wofi - tabs act as column separators, only first column shown
+selected=$(echo "$all_entries" | wofi --dmenu --insensitive --width=75% --prompt="Switch to: ")
 
-# Exit if no workspace selected (user pressed Esc or Ctrl+C)
-if [[ -z "$selected" ]]; then
-    exit 0
-fi
+# Exit if nothing selected
+[[ -z "$selected" ]] && exit 0
 
-# Extract workspace ID, class, and title from the selected line
-# Format: "▶ Workspace ID: Name | Monitor | Program - Title" or "  Workspace ID: Name | Monitor | (empty)"
-workspace_id=$(echo "$selected" | sed -n 's/.*Workspace \([0-9]*\):.*/\1/p')
-# Extract the last field and split class and title
-last_field=$(echo "$selected" | sed 's/^[▶ ]*//' | awk -F'|' '{print $NF}' | xargs)
-class=$(echo "$last_field" | sed 's/ - .*$//' | xargs)
-title=$(echo "$last_field" | sed -n 's/.* - \(.*\)$/\1/p' | xargs)
+# Extract workspace ID and window address directly from selection
+workspace_id=$(echo "$selected" | cut -f2)
+window_address=$(echo "$selected" | cut -f3)
 
-# Find the window address from the original data by matching workspace_id, class, and title
-if [[ "$class" != "(empty)" ]]; then
-    if [[ -n "$title" ]]; then
-        # Match by workspace_id, class, and title
-        window_address=$(echo "$workspace_list" | awk -F'|' -v ws="$workspace_id" -v cls="$class" -v ttl="$title" '$1 == ws && $3 == cls && $4 == ttl {print $2; exit}')
-    else
-        # Match by workspace_id and class only (fallback if no title)
-        window_address=$(echo "$workspace_list" | awk -F'|' -v ws="$workspace_id" -v cls="$class" '$1 == ws && $3 == cls {print $2; exit}')
-    fi
-else
-    window_address=""
-fi
-
-# Switch to the workspace
-hyprctl dispatch workspace "$workspace_id"
-
-# If there's a window address, focus that specific window
-if [[ -n "$window_address" && "$window_address" != "" ]]; then
+# Focus the window (or just switch workspace if empty)
+if [[ -n "$window_address" ]]; then
+    hyprctl dispatch workspace "$workspace_id"
+    sleep 0.1
     hyprctl dispatch focuswindow "address:$window_address"
+else
+    hyprctl dispatch workspace "$workspace_id"
 fi
-

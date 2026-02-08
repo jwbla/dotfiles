@@ -114,6 +114,7 @@ alias tns='tmux new -s'
 alias ta='tmux a'
 alias tat='tmux a -t'
 alias oc=opencode
+alias rp=repoman
 
 if [ -d "$HOME/.rgtv" ]; then
     source "$HOME/.rgtv/.rgtv.sh"
