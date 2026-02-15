@@ -274,15 +274,112 @@ get_battery_info() {
         if [[ -n "$batteries" ]]; then
             echo "Battery Information:"
             for battery in $batteries; do
-                local capacity=$(cat /sys/class/power_supply/$battery/capacity 2>/dev/null)
-                local status=$(cat /sys/class/power_supply/$battery/status 2>/dev/null)
-                local health=$(cat /sys/class/power_supply/$battery/health 2>/dev/null)
-                
+                local bat="/sys/class/power_supply/$battery"
+                local capacity=$(cat "$bat/capacity" 2>/dev/null)
+                local status=$(cat "$bat/status" 2>/dev/null)
+                local health=$(cat "$bat/health" 2>/dev/null)
+                local technology=$(cat "$bat/technology" 2>/dev/null)
+                local cycle_count=$(cat "$bat/cycle_count" 2>/dev/null)
+                local voltage_now=$(cat "$bat/voltage_now" 2>/dev/null)
+                local voltage_min=$(cat "$bat/voltage_min_design" 2>/dev/null)
+                local power_now=$(cat "$bat/power_now" 2>/dev/null)
+                local current_now=$(cat "$bat/current_now" 2>/dev/null)
+                local energy_now=$(cat "$bat/energy_now" 2>/dev/null)
+                local energy_full=$(cat "$bat/energy_full" 2>/dev/null)
+                local energy_full_design=$(cat "$bat/energy_full_design" 2>/dev/null)
+                local charge_now=$(cat "$bat/charge_now" 2>/dev/null)
+                local charge_full=$(cat "$bat/charge_full" 2>/dev/null)
+                local charge_full_design=$(cat "$bat/charge_full_design" 2>/dev/null)
+
                 if [[ -n "$capacity" ]]; then
                     echo "  $battery: ${capacity}% ($status)"
+
+                    if [[ -n "$technology" ]]; then
+                        echo "    Technology: $technology"
+                    fi
+
                     if [[ -n "$health" ]]; then
                         echo "    Health: $health"
                     fi
+
+                    if [[ -n "$cycle_count" && "$cycle_count" != "0" ]]; then
+                        echo "    Cycle Count: $cycle_count"
+                    fi
+
+                    # Capacity wear level (energy-based or charge-based)
+                    if [[ -n "$energy_full" && -n "$energy_full_design" && "$energy_full_design" -gt 0 ]]; then
+                        local wear=$(( (energy_full * 100) / energy_full_design ))
+                        local full_wh=$(awk "BEGIN {printf \"%.1f\", $energy_full / 1000000}")
+                        local design_wh=$(awk "BEGIN {printf \"%.1f\", $energy_full_design / 1000000}")
+                        echo "    Capacity: ${full_wh} Wh / ${design_wh} Wh design (${wear}% remaining)"
+                    elif [[ -n "$charge_full" && -n "$charge_full_design" && "$charge_full_design" -gt 0 ]]; then
+                        local wear=$(( (charge_full * 100) / charge_full_design ))
+                        local full_mah=$(( charge_full / 1000 ))
+                        local design_mah=$(( charge_full_design / 1000 ))
+                        echo "    Capacity: ${full_mah} mAh / ${design_mah} mAh design (${wear}% remaining)"
+                    fi
+
+                    # Current energy level
+                    if [[ -n "$energy_now" && -n "$energy_full" ]]; then
+                        local energy_wh=$(awk "BEGIN {printf \"%.1f\", $energy_now / 1000000}")
+                        local full_wh=$(awk "BEGIN {printf \"%.1f\", $energy_full / 1000000}")
+                        echo "    Energy: ${energy_wh} / ${full_wh} Wh"
+                    fi
+
+                    # Voltage
+                    if [[ -n "$voltage_now" ]]; then
+                        local volts=$(awk "BEGIN {printf \"%.2f\", $voltage_now / 1000000}")
+                        local volt_str="Voltage: ${volts}V"
+                        if [[ -n "$voltage_min" ]]; then
+                            local min_volts=$(awk "BEGIN {printf \"%.2f\", $voltage_min / 1000000}")
+                            volt_str="$volt_str (min design: ${min_volts}V)"
+                        fi
+                        echo "    $volt_str"
+                    fi
+
+                    # Power draw / charge rate
+                    if [[ -n "$power_now" && "$power_now" -gt 0 ]]; then
+                        local watts=$(awk "BEGIN {printf \"%.1f\", $power_now / 1000000}")
+                        if [[ "$status" == "Discharging" ]]; then
+                            echo "    Power Draw: ${watts}W"
+                        else
+                            echo "    Charge Rate: ${watts}W"
+                        fi
+                    elif [[ -n "$current_now" && -n "$voltage_now" && "$current_now" -gt 0 ]]; then
+                        local watts=$(awk "BEGIN {printf \"%.1f\", ($current_now * $voltage_now) / 1000000000000.0}")
+                        if [[ "$status" == "Discharging" ]]; then
+                            echo "    Power Draw: ${watts}W"
+                        else
+                            echo "    Charge Rate: ${watts}W"
+                        fi
+                    fi
+
+                    # Time estimate
+                    if [[ "$status" == "Discharging" && -n "$energy_now" && -n "$power_now" && "$power_now" -gt 0 ]]; then
+                        local minutes=$(( (energy_now * 60) / power_now ))
+                        local hours=$(( minutes / 60 ))
+                        local mins=$(( minutes % 60 ))
+                        echo "    Time Remaining: ~${hours}h ${mins}m"
+                    elif [[ "$status" == "Charging" && -n "$energy_now" && -n "$energy_full" && -n "$power_now" && "$power_now" -gt 0 ]]; then
+                        local remaining=$(( energy_full - energy_now ))
+                        local minutes=$(( (remaining * 60) / power_now ))
+                        local hours=$(( minutes / 60 ))
+                        local mins=$(( minutes % 60 ))
+                        echo "    Time to Full: ~${hours}h ${mins}m"
+                    fi
+                fi
+            done
+        fi
+
+        # AC adapter status
+        local ac_adapters=$(ls /sys/class/power_supply/ | grep -E "^AC|^ADP|^ACAD")
+        if [[ -n "$ac_adapters" ]]; then
+            for ac in $ac_adapters; do
+                local online=$(cat /sys/class/power_supply/$ac/online 2>/dev/null)
+                if [[ "$online" == "1" ]]; then
+                    echo "  AC Adapter: Connected"
+                else
+                    echo "  AC Adapter: Disconnected"
                 fi
             done
         fi
