@@ -108,7 +108,22 @@ alias inv='nvim $(fzf --preview="bat --color=always {}")'
 alias nv=nvim
 alias n='nvim .'
 alias nb='newsboat -r'
-alias t=tmux
+load_tmux() {
+  if ! tmux list-sessions &>/dev/null; then
+    tmux
+  else
+    local sessions="$(tmux list-sessions -F '#{session_name}: #{session_windows} windows (#{session_attached} attached)')"
+    local choice="$(printf "+ New Session\n%s" "$sessions" | fzf --prompt="tmux> " --height=~50%)"
+    [[ -z "$choice" ]] && return
+    if [[ "$choice" == "+ New Session" ]]; then
+      tmux
+    else
+      tmux attach -t "${choice%%:*}"
+    fi
+  fi
+}
+alias t=load_tmux
+alias tn=tmux
 alias tks='tmux kill-server'
 alias tns='tmux new -s'
 alias ta='tmux a'
