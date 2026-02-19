@@ -144,6 +144,7 @@ alias ta='tmux a'
 alias tat='tmux a -t'
 alias oc=opencode
 alias rp=repoman
+alias gbf='git branch | fzf | sed "s/^[* ]*//" | xargs git checkout'
 
 if [ -d "$HOME/.rgtv" ]; then
     source "$HOME/.rgtv/.rgtv.sh"
