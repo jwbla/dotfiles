@@ -8,6 +8,7 @@
 		"hyprland/workspaces",
 	],
 	"modules-right": [
+        "custom/pomodoro",
         "network",
 		"pulseaudio",
 		"battery",
@@ -107,6 +108,13 @@
 	"tray": {
 		"icon-size": 18,
         "spacing": 5
+	},
+	"custom/pomodoro": {
+		"exec": "~/.config/waybar/pomodoro.sh status",
+		"on-click": "~/.config/waybar/pomodoro.sh toggle; pkill -RTMIN+8 waybar",
+		"interval": 1,
+		"signal": 8,
+		"return-type": "json"
 	},
 	"custom/weather": {
 		"exec": "~/.config/waybar/weather.sh",

@@ -37,6 +37,7 @@ window#waybar {
 #network,
 #battery,
 #disk,
+#custom-pomodoro,
 #custom-weather,
 #tray {
     padding: .25rem .5rem;
@@ -67,6 +68,12 @@ window#waybar {
 #workspaces button:hover label {
     background: transparent;
     color: @lavender;
+}
+#custom-pomodoro.idle {
+    opacity: 0.35;
+}
+#custom-pomodoro.active {
+    opacity: 1.0;
 }
 #battery.warning {
     color: @yellow;

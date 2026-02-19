@@ -109,16 +109,30 @@ alias nv=nvim
 alias n='nvim .'
 alias nb='newsboat -r'
 load_tmux() {
-  if ! tmux list-sessions &>/dev/null; then
-    tmux
-  else
+  if [[ -n "$TMUX" ]]; then
+    # Already inside tmux — switch, don't nest
     local sessions="$(tmux list-sessions -F '#{session_name}: #{session_windows} windows (#{session_attached} attached)')"
     local choice="$(printf "+ New Session\n%s" "$sessions" | fzf --prompt="tmux> " --height=~50%)"
     [[ -z "$choice" ]] && return
     if [[ "$choice" == "+ New Session" ]]; then
+      tmux new-session -d
+      tmux switch-client -t "$(tmux list-sessions -F '#{session_name}' | tail -1)"
+    else
+      tmux switch-client -t "${choice%%:*}"
+    fi
+  else
+    # Outside tmux — existing behavior
+    if ! tmux list-sessions &>/dev/null; then
       tmux
     else
-      tmux attach -t "${choice%%:*}"
+      local sessions="$(tmux list-sessions -F '#{session_name}: #{session_windows} windows (#{session_attached} attached)')"
+      local choice="$(printf "+ New Session\n%s" "$sessions" | fzf --prompt="tmux> " --height=~50%)"
+      [[ -z "$choice" ]] && return
+      if [[ "$choice" == "+ New Session" ]]; then
+        tmux
+      else
+        tmux attach -t "${choice%%:*}"
+      fi
     fi
   fi
 }
@@ -139,6 +153,66 @@ fi
 if [[ -f "$HOME/.hof.sh" ]]; then
     source "$HOME/.hof.sh"
 fi
+
+_motd() {
+  local sapphire='\033[38;2;116;199;236m'
+  local text='\033[38;2;205;214;244m'
+  local peach='\033[38;2;250;179;135m'
+  local overlay0='\033[38;2;108;112;134m'
+  local reset='\033[0m'
+
+  # Line 1: date
+  local date_str
+  date_str=$(date +"%a %b %d")
+  printf '%b\n' "${sapphire}  ${date_str}${reset}"
+
+  # Line 2: tmux sessions (only if any active)
+  if command -v tmux &>/dev/null; then
+    local tmux_names
+    tmux_names=$(tmux list-sessions -F '#{session_name}' 2>/dev/null)
+    if [[ -n "$tmux_names" ]]; then
+      local tmux_joined=""
+      local tmux_first=1
+      while IFS= read -r name; do
+        [[ -z "$name" ]] && continue
+        if (( tmux_first )); then
+          tmux_first=0
+        else
+          tmux_joined+="${overlay0}, ${reset}"
+        fi
+        tmux_joined+="${text}${name}${reset}"
+      done <<< "$tmux_names"
+      printf '%b\n' " ${sapphire}tmux sessions:${reset} ${tmux_joined}"
+    fi
+  fi
+
+  # Line 2: tasks due today
+  if command -v task &>/dev/null; then
+    local tasks_today
+    tasks_today=$(task rc.verbose=nothing \
+      rc.report._motd.columns=id,description.truncated,due.relative \
+      rc.report._motd.labels=,,  \
+      rc.report._motd.sort=due+ \
+      rc.report._motd.filter='due.before:+24h status:pending' \
+      rc.defaultwidth=60 \
+      _motd 2>/dev/null)
+    if [[ -n "$tasks_today" ]]; then
+      printf '%b\n' " ${sapphire}󰄲 due within 24h${reset}"
+      while IFS= read -r line; do
+        [[ -z "$line" ]] && continue
+        printf '%b\n' "   ${text}${line}${reset}"
+      done <<< "$tasks_today"
+    fi
+
+    # Line 3: overdue warning
+    local overdue_count
+    overdue_count=$(task +OVERDUE status:pending count 2>/dev/null)
+    if [[ -n "$overdue_count" ]] && (( overdue_count > 0 )); then
+      printf '%b\n' " ${peach} ${overdue_count} overdue${reset}"
+    fi
+  fi
+}
+_motd
 
 eval "$(starship init zsh)"
 eval "$(zoxide init zsh)"
