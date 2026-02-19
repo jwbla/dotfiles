@@ -37,7 +37,6 @@ window#waybar {
 #network,
 #battery,
 #disk,
-#custom-pomodoro,
 #custom-weather,
 #tray {
     padding: .25rem .5rem;
@@ -54,6 +53,9 @@ window#waybar {
 #custom-weather:hover,
 #tray:hover {
     color: @lavender;
+}
+#custom-pomodoro {
+    padding-bottom: 2px;
 }
 
 #workspaces button {

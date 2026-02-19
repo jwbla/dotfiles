@@ -8,10 +8,10 @@
 		"hyprland/workspaces",
 	],
 	"modules-right": [
-        "custom/pomodoro",
         "network",
 		"pulseaudio",
 		"battery",
+        "custom/pomodoro",
         "custom/weather",
         "tray",
         "clock"
