@@ -22,6 +22,7 @@ $haskell\
 $python\
 [](fg:green bg:sapphire)\
 ${custom.tasks}\
+${custom.timew}\
 [](fg:sapphire bg:lavender)\
 $time\
 [ ](fg:lavender)\
@@ -147,6 +148,14 @@ format = '[[ $symbol( $context) ](fg:crust bg:sapphire)]($style)'
 command = "task due.before:+24h status:pending count 2>/dev/null"
 when = "[ $(task due.before:+24h status:pending count 2>/dev/null) -gt 0 ]"
 symbol = "󰄲 "
+style = "fg:crust bg:sapphire"
+format = '[ $symbol$output ]($style)'
+shell = ["bash", "--noprofile", "--norc"]
+
+[custom.timew]
+command = "timew get dom.active.tag.1 2>/dev/null"
+when = "[ $(timew get dom.active 2>/dev/null) = 1 ]"
+symbol = " "
 style = "fg:crust bg:sapphire"
 format = '[ $symbol$output ]($style)'
 shell = ["bash", "--noprofile", "--norc"]
