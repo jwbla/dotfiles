@@ -11,20 +11,44 @@ is_running() {
     [[ -f "$PID_FILE" ]] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null
 }
 
+start_timer() {
+    echo $(( $(date +%s) + WORK_TIME )) > "$END_FILE"
+    nohup bash -c "
+        sleep $WORK_TIME
+        notify-send -u critical '🍅 Pomodoro' 'Time is up!'
+        rm -f '$PID_FILE' '$END_FILE'
+        pkill -RTMIN+8 waybar
+    " >/dev/null 2>&1 &
+    echo $! > "$PID_FILE"
+}
+
+stop_timer() {
+    kill "$(cat "$PID_FILE")" 2>/dev/null
+    rm -f "$PID_FILE" "$END_FILE"
+}
+
 case "$1" in
     "toggle")
         if is_running; then
-            kill "$(cat "$PID_FILE")" 2>/dev/null
-            rm -f "$PID_FILE" "$END_FILE"
+            stop_timer
         else
-            echo $(( $(date +%s) + WORK_TIME )) > "$END_FILE"
-            nohup bash -c "
-                sleep $WORK_TIME
-                notify-send -u critical '🍅 Pomodoro' 'Time is up!'
-                rm -f '$PID_FILE' '$END_FILE'
-                pkill -RTMIN+8 waybar
-            " >/dev/null 2>&1 &
-            echo $! > "$PID_FILE"
+            start_timer
+        fi
+        ;;
+    "start")
+        if is_running; then
+            echo "Pomodoro already running"
+        else
+            start_timer
+            echo "Pomodoro started"
+        fi
+        ;;
+    "stop")
+        if is_running; then
+            stop_timer
+            echo "Pomodoro stopped"
+        else
+            echo "No pomodoro running"
         fi
         ;;
     "status")

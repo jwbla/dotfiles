@@ -137,7 +137,8 @@ load_tmux() {
   fi
 }
 alias t=load_tmux
-alias tn=tmux
+alias tls='tmux list-sessions'
+alias tm=tmux
 alias tks='tmux kill-server'
 alias tns='tmux new -s'
 alias ta='tmux a'
@@ -145,6 +146,10 @@ alias tat='tmux a -t'
 alias oc=opencode
 alias rp=repoman
 alias gbf='git branch | fzf | sed "s/^[* ]*//" | xargs git checkout'
+pomo() {
+  ~/.config/waybar/pomodoro.sh "$@"
+  pkill -RTMIN+8 waybar
+}
 
 if [ -d "$HOME/.rgtv" ]; then
     source "$HOME/.rgtv/.rgtv.sh"
