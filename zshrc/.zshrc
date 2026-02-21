@@ -217,6 +217,7 @@ _motd
 
 eval "$(starship init zsh)"
 eval "$(zoxide init zsh)"
+eval "$(repoman shell-init zsh)"
 
 # opencode
 export PATH=/home/jwbla/.opencode/bin:$PATH
