@@ -38,7 +38,7 @@ window#waybar {
 .modules-center {
     border-radius: 15px;
     border: 2px solid #ac4fc6;
-    background: rgba(0,0,0,.5);
+    background: rgba(0,0,0,.1);
     animation: border-glow 9s linear infinite;
 }
 
@@ -99,4 +99,49 @@ window#waybar {
 }
 #battery.full {
     color: @green;
+}
+/* #battery.not-charging {
+    border: 1px solid @blue;
+    border-radius: 10px;
+}
+#battery.charging {
+    border: 1px solid @green;
+    border-radius: 10px;
+}
+#battery.discharging {
+    border: 1px solid @red;
+    border-radius: 10px;
+} */
+#battery.not-charging {
+    text-shadow:
+        -1px -1px 0 @blue,
+         1px -1px 0 @blue,
+        -1px  1px 0 @blue,
+         1px  1px 0 @blue,
+         0px -1px 0 @blue,
+         0px  1px 0 @blue,
+        -1px  0px 0 @blue,
+         1px  0px 0 @blue;
+}
+#battery.charging {
+    text-shadow:
+        -1px -1px 0 @green,
+         1px -1px 0 @green,
+        -1px  1px 0 @green,
+         1px  1px 0 @green,
+         0px -1px 0 @green,
+         0px  1px 0 @green,
+        -1px  0px 0 @green,
+         1px  0px 0 @green;
+}
+#battery.discharging {
+    text-shadow:
+        -1px -1px 0 @red,
+         1px -1px 0 @red,
+        -1px  1px 0 @red,
+         1px  1px 0 @red,
+         0px -1px 0 @red,
+         0px  1px 0 @red,
+        -1px  0px 0 @red,
+         1px  0px 0 @red;
 }

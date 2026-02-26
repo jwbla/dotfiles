@@ -81,6 +81,7 @@
 			"warning": 30,
 			"critical": 15
 		},
+		"format": "{icon}",
 		"format-discharging": "{icon}",
 		"format-charging": "{icon}",
 		"format-full": "󱟢",
@@ -89,8 +90,10 @@
 			"charging": ["󰢜", "󰂆", "󰂇", "󰂈", "󰢝", "󰂉", "󰢞", "󰂊", "󰂋"]
 		},
 		"tooltip-format": "bat1: {capacity}%",
-		"tooltip-format-charging": "bat1: {capacity}% ({time})",
-		"tooltip-format-discharging": "bat1: {capacity}% ({time})"
+		"tooltip-format-charging": "bat1: {capacity}% charging ({time})",
+		"tooltip-format-discharging": "bat1: {capacity}% discharging ({time})",
+		"tooltip-format-not-charging": "bat1: {capacity}% not charging",
+		"tooltip-format-full": "bat1: {capacity}% full"
 	},
 	"battery#bat0": {
 		"bat": "BAT0",
@@ -98,6 +101,7 @@
 			"warning": 30,
 			"critical": 15
 		},
+		"format": "{icon}",
 		"format-discharging": "{icon}",
 		"format-charging": "{icon}",
 		"format-full": "󱟢",
@@ -106,8 +110,10 @@
 			"charging": ["󰢜", "󰂆", "󰂇", "󰂈", "󰢝", "󰂉", "󰢞", "󰂊", "󰂋"]
 		},
 		"tooltip-format": "bat0: {capacity}%",
-		"tooltip-format-charging": "bat0: {capacity}% ({time})",
-		"tooltip-format-discharging": "bat0: {capacity}% ({time})"
+		"tooltip-format-charging": "bat0: {capacity}% charging ({time})",
+		"tooltip-format-discharging": "bat0: {capacity}% discharging ({time})",
+		"tooltip-format-not-charging": "bat0: {capacity}% not charging",
+		"tooltip-format-full": "bat0: {capacity}% full"
 	},
 	"tray": {
 		"icon-size": 18,
