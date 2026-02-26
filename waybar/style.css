@@ -29,6 +29,19 @@ window#waybar {
     /* border-radius: 20px; */
 }
 
+@keyframes border-glow {
+    0% { border-color: #ac4fc6; }
+    50% { border-color: #ff007f; }
+    100% { border-color: #ac4fc6; }
+}
+
+.modules-center {
+    border-radius: 15px;
+    border: 2px solid #ac4fc6;
+    background: rgba(0,0,0,.5);
+    animation: border-glow 9s linear infinite;
+}
+
 #window,
 #workspaces,
 #clock,
