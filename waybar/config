@@ -13,8 +13,8 @@
 	"modules-right": [
         "network",
 		"pulseaudio",
-		"battery#bat1",
 		"battery#bat0",
+        "battery#bat1",
         "custom/pomodoro",
         "custom/weather",
         "tray",
