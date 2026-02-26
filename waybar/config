@@ -7,10 +7,14 @@
 	"modules-left": [
 		"hyprland/workspaces",
 	],
+	"modules-center": [
+		"hyprland/window"
+	],
 	"modules-right": [
         "network",
 		"pulseaudio",
-		"battery",
+		"battery#bat1",
+		"battery#bat0",
         "custom/pomodoro",
         "custom/weather",
         "tray",
@@ -19,6 +23,10 @@
     "hyprland/workspaces": {
 		"disable-scroll": true,
 		"format": "{name}",
+	},
+	"hyprland/window": {
+		"format": "{class}",
+		"separate-outputs": true
 	},
 	"clock": {
 		"format": "{:%H:%M}",
@@ -67,43 +75,39 @@
 		"on-click-right": "pavucontrol",
         "tooltip-format": "{volume}%"
 	},
-	"battery": {
+	"battery#bat1": {
+		"bat": "BAT1",
 		"states": {
 			"warning": 30,
 			"critical": 15
 		},
 		"format-discharging": "{icon}",
 		"format-charging": "{icon}",
-        "format-full": "󱟢",
+		"format-full": "󱟢",
 		"format-icons": {
-            "default": [
-                "󰂎",
-                "󰁺",
-                "󰁻",
-                "󰁼",
-                "󰁽",
-                "󰁾",
-                "󰁿",
-                "󰁿",
-                "󰂁",
-                "󰂂",
-                "󰁹",
-            ],
-            "charging": [
-                "󰢜",
-                "󰂆",
-                "󰂇",
-                "󰂈",
-                "󰢝",
-                "󰂉",
-                "󰢞",
-                "󰂊",
-                "󰂋",
-            ],
-        },
-        "tooltip-format": "{capacity}%",
-        "tooltip-format-charging": "{capacity}% ({time})",
-        "tooltip-format-discharging": "{capacity}% ({time})",
+			"default": ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰁿", "󰂁", "󰂂", "󰁹"],
+			"charging": ["󰢜", "󰂆", "󰂇", "󰂈", "󰢝", "󰂉", "󰢞", "󰂊", "󰂋"]
+		},
+		"tooltip-format": "bat1: {capacity}%",
+		"tooltip-format-charging": "bat1: {capacity}% ({time})",
+		"tooltip-format-discharging": "bat1: {capacity}% ({time})"
+	},
+	"battery#bat0": {
+		"bat": "BAT0",
+		"states": {
+			"warning": 30,
+			"critical": 15
+		},
+		"format-discharging": "{icon}",
+		"format-charging": "{icon}",
+		"format-full": "󱟢",
+		"format-icons": {
+			"default": ["󰂎", "󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰁿", "󰂁", "󰂂", "󰁹"],
+			"charging": ["󰢜", "󰂆", "󰂇", "󰂈", "󰢝", "󰂉", "󰢞", "󰂊", "󰂋"]
+		},
+		"tooltip-format": "bat0: {capacity}%",
+		"tooltip-format-charging": "bat0: {capacity}% ({time})",
+		"tooltip-format-discharging": "bat0: {capacity}% ({time})"
 	},
 	"tray": {
 		"icon-size": 18,
