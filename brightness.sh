@@ -27,4 +27,4 @@ case "$1" in
         ;;
 esac
 
-echo "$NEW" | sudo tee "$BRIGHTNESS_PATH/brightness"
+echo "$NEW" > "$BRIGHTNESS_PATH/brightness"
