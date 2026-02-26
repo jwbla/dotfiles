@@ -112,6 +112,17 @@ window#waybar {
     border: 1px solid @red;
     border-radius: 10px;
 } */
+#battery.plugged {
+    text-shadow:
+        -1px -1px 0 @blue,
+         1px -1px 0 @blue,
+        -1px  1px 0 @blue,
+         1px  1px 0 @blue,
+         0px -1px 0 @blue,
+         0px  1px 0 @blue,
+        -1px  0px 0 @blue,
+         1px  0px 0 @blue;
+}
 #battery.not-charging {
     text-shadow:
         -1px -1px 0 @blue,

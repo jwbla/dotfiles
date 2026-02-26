@@ -81,6 +81,9 @@
 			"warning": 30,
 			"critical": 15
 		},
+        "events": {
+            "on-discharging-critical": "notify-send -u critical 'Low BAT1'",
+        },
 		"format": "{icon}",
 		"format-discharging": "{icon}",
 		"format-charging": "{icon}",
@@ -93,6 +96,7 @@
 		"tooltip-format-charging": "bat1: {capacity}% charging ({time})",
 		"tooltip-format-discharging": "bat1: {capacity}% discharging ({time})",
 		"tooltip-format-not-charging": "bat1: {capacity}% not charging",
+		"tooltip-format-plugged": "bat1: {capacity}% plugged",
 		"tooltip-format-full": "bat1: {capacity}% full"
 	},
 	"battery#bat0": {
@@ -101,6 +105,9 @@
 			"warning": 30,
 			"critical": 15
 		},
+        "events": {
+            "on-discharging-critical": "notify-send -u critical 'Low BAT0'",
+        },
 		"format": "{icon}",
 		"format-discharging": "{icon}",
 		"format-charging": "{icon}",
@@ -113,6 +120,7 @@
 		"tooltip-format-charging": "bat0: {capacity}% charging ({time})",
 		"tooltip-format-discharging": "bat0: {capacity}% discharging ({time})",
 		"tooltip-format-not-charging": "bat0: {capacity}% not charging",
+		"tooltip-format-plugged": "bat0: {capacity}% plugged",
 		"tooltip-format-full": "bat0: {capacity}% full"
 	},
 	"tray": {
