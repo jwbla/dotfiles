@@ -156,3 +156,14 @@ window#waybar {
         -1px  0px 0 @red,
          1px  0px 0 @red;
 }
+#battery.full{
+    text-shadow:
+        -1px -1px 0 @green,
+         1px -1px 0 @green,
+        -1px  1px 0 @green,
+         1px  1px 0 @green,
+         0px -1px 0 @green,
+         0px  1px 0 @green,
+        -1px  0px 0 @green,
+         1px  0px 0 @green;
+}
