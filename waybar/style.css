@@ -36,21 +36,21 @@ window#waybar {
 }
 
 @keyframes plugged-glow {
-    0%   { text-shadow: 0 0 2px @blue; }
-    50%  { text-shadow: 0 0 2px @lavender; }
-    100% { text-shadow: 0 0 2px @blue; }
+    0%   { text-shadow: 0 0 0 @blue, 0 0 1px @blue, 0 0 2px @blue; }
+    50%  { text-shadow: 0 0 0 @blue, 0 0 1px @blue, 0 0 6px @lavender; }
+    100% { text-shadow: 0 0 0 @blue, 0 0 1px @blue, 0 0 2px @blue; }
 }
 
 @keyframes charging-glow {
-    0%   { text-shadow: 0 0 2px @green; }
-    50%  { text-shadow: 0 0 2px @teal; }
-    100% { text-shadow: 0 0 2px @green; }
+    0%   { text-shadow: 0 0 0 @green, 0 0 1px @green, 0 0 2px @green; }
+    50%  { text-shadow: 0 0 0 @green, 0 0 1px @green, 0 0 6px @teal; }
+    100% { text-shadow: 0 0 0 @green, 0 0 1px @green, 0 0 2px @green; }
 }
 
 @keyframes discharging-glow {
-    0%   { text-shadow: 0 0 2px @red; }
-    50%  { text-shadow: 0 0 2px @maroon; }
-    100% { text-shadow: 0 0 2px @red; }
+    0%   { text-shadow: 0 0 0 @red, 0 0 1px @red, 0 0 2px @red; }
+    50%  { text-shadow: 0 0 0 @red, 0 0 1px @red, 0 0 6px @maroon; }
+    100% { text-shadow: 0 0 0 @red, 0 0 1px @red, 0 0 2px @red; }
 }
 
 .modules-center {
@@ -121,18 +121,6 @@ window#waybar {
 #battery.full {
     color: @green;
 }
-/* #battery.not-charging {
-    border: 1px solid @blue;
-    border-radius: 10px;
-}
-#battery.charging {
-    border: 1px solid @green;
-    border-radius: 10px;
-}
-#battery.discharging {
-    border: 1px solid @red;
-    border-radius: 10px;
-} */
 #battery.plugged {
     animation: plugged-glow 4s ease-in-out infinite;
 }
