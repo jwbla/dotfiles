@@ -113,57 +113,17 @@ window#waybar {
     border-radius: 10px;
 } */
 #battery.plugged {
-    text-shadow:
-        -1px -1px 0 @blue,
-         1px -1px 0 @blue,
-        -1px  1px 0 @blue,
-         1px  1px 0 @blue,
-         0px -1px 0 @blue,
-         0px  1px 0 @blue,
-        -1px  0px 0 @blue,
-         1px  0px 0 @blue;
+    text-shadow: 0 0 2px @blue;
 }
 #battery.not-charging {
-    text-shadow:
-        -1px -1px 0 @blue,
-         1px -1px 0 @blue,
-        -1px  1px 0 @blue,
-         1px  1px 0 @blue,
-         0px -1px 0 @blue,
-         0px  1px 0 @blue,
-        -1px  0px 0 @blue,
-         1px  0px 0 @blue;
+    text-shadow: 0 0 2px @blue;
 }
 #battery.charging {
-    text-shadow:
-        -1px -1px 0 @green,
-         1px -1px 0 @green,
-        -1px  1px 0 @green,
-         1px  1px 0 @green,
-         0px -1px 0 @green,
-         0px  1px 0 @green,
-        -1px  0px 0 @green,
-         1px  0px 0 @green;
+    text-shadow: 0 0 2px @green;
 }
 #battery.discharging {
-    text-shadow:
-        -1px -1px 0 @red,
-         1px -1px 0 @red,
-        -1px  1px 0 @red,
-         1px  1px 0 @red,
-         0px -1px 0 @red,
-         0px  1px 0 @red,
-        -1px  0px 0 @red,
-         1px  0px 0 @red;
+    text-shadow: 0 0 2px @red;
 }
 #battery.full{
-    text-shadow:
-        -1px -1px 0 @green,
-         1px -1px 0 @green,
-        -1px  1px 0 @green,
-         1px  1px 0 @green,
-         0px -1px 0 @green,
-         0px  1px 0 @green,
-        -1px  0px 0 @green,
-         1px  0px 0 @green;
+    text-shadow: 0 0 2px @green;
 }
