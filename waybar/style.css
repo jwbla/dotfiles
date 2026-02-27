@@ -53,12 +53,6 @@ window#waybar {
     100% { text-shadow: 0 0 2px @red; }
 }
 
-@keyframes full-glow {
-    0%   { text-shadow: 0 0 2px @green; }
-    50%  { text-shadow: 0 0 2px @sky; }
-    100% { text-shadow: 0 0 2px @green; }
-}
-
 .modules-center {
     border-radius: 15px;
     border: 2px solid #ac4fc6;
@@ -115,6 +109,9 @@ window#waybar {
 #custom-pomodoro.active {
     opacity: 1.0;
 }
+#battery {
+    color: @blue;
+}
 #battery.warning {
     color: @yellow;
 }
@@ -149,5 +146,5 @@ window#waybar {
     animation: discharging-glow 5s ease-in-out infinite;
 }
 #battery.full {
-    animation: full-glow 6s ease-in-out infinite;
+    animation: plugged-glow 6s ease-in-out infinite;
 }
