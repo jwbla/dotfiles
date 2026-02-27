@@ -36,21 +36,21 @@ window#waybar {
 }
 
 @keyframes plugged-glow {
-    0%   { text-shadow: 0 0 0 @blue, 0 0 1px @blue, 0 0 2px @blue; }
-    50%  { text-shadow: 0 0 0 @blue, 0 0 1px @blue, 0 0 6px @lavender; }
-    100% { text-shadow: 0 0 0 @blue, 0 0 1px @blue, 0 0 2px @blue; }
+    0%   { text-shadow: 0 0 1px @blue, 0 0 2px @blue, 0 0 2px @blue; }
+    50%  { text-shadow: 0 0 1px @blue, 0 0 2px @blue, 0 0 6px @lavender; }
+    100% { text-shadow: 0 0 1px @blue, 0 0 2px @blue, 0 0 2px @blue; }
 }
 
 @keyframes charging-glow {
-    0%   { text-shadow: 0 0 0 @green, 0 0 1px @green, 0 0 2px @green; }
-    50%  { text-shadow: 0 0 0 @green, 0 0 1px @green, 0 0 6px @teal; }
-    100% { text-shadow: 0 0 0 @green, 0 0 1px @green, 0 0 2px @green; }
+    0%   { text-shadow: 0 0 1px @green, 0 0 2px @green, 0 0 2px @green; }
+    50%  { text-shadow: 0 0 1px @green, 0 0 2px @green, 0 0 6px @teal; }
+    100% { text-shadow: 0 0 1px @green, 0 0 2px @green, 0 0 2px @green; }
 }
 
 @keyframes discharging-glow {
-    0%   { text-shadow: 0 0 0 @red, 0 0 1px @red, 0 0 2px @red; }
-    50%  { text-shadow: 0 0 0 @red, 0 0 1px @red, 0 0 6px @maroon; }
-    100% { text-shadow: 0 0 0 @red, 0 0 1px @red, 0 0 2px @red; }
+    0%   { text-shadow: 0 0 1px @red, 0 0 2px @red, 0 0 2px @red; }
+    50%  { text-shadow: 0 0 1px @red, 0 0 2px @red, 0 0 6px @maroon; }
+    100% { text-shadow: 0 0 1px @red, 0 0 2px @red, 0 0 2px @red; }
 }
 
 .modules-center {
@@ -122,10 +122,10 @@ window#waybar {
     color: @green;
 }
 #battery.plugged {
-    animation: plugged-glow 4s ease-in-out infinite;
+    text-shadow: 0 0 1px @blue, 0 0 2px @blue, 0 0 2px @blue;
 }
 #battery.not-charging {
-    animation: plugged-glow 4s ease-in-out infinite;
+    text-shadow: 0 0 1px @blue, 0 0 2px @blue, 0 0 2px @blue;
 }
 #battery.charging {
     animation: charging-glow 3s ease-in-out infinite;
@@ -134,5 +134,5 @@ window#waybar {
     animation: discharging-glow 5s ease-in-out infinite;
 }
 #battery.full {
-    animation: plugged-glow 6s ease-in-out infinite;
+    text-shadow: 0 0 1px @green, 0 0 2px @green, 0 0 2px @green;
 }
