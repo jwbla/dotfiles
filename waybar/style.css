@@ -35,6 +35,30 @@ window#waybar {
     100% { border-color: #ac4fc6; }
 }
 
+@keyframes plugged-glow {
+    0%   { text-shadow: 0 0 2px @blue; }
+    50%  { text-shadow: 0 0 2px @lavender; }
+    100% { text-shadow: 0 0 2px @blue; }
+}
+
+@keyframes charging-glow {
+    0%   { text-shadow: 0 0 2px @green; }
+    50%  { text-shadow: 0 0 2px @teal; }
+    100% { text-shadow: 0 0 2px @green; }
+}
+
+@keyframes discharging-glow {
+    0%   { text-shadow: 0 0 2px @red; }
+    50%  { text-shadow: 0 0 2px @maroon; }
+    100% { text-shadow: 0 0 2px @red; }
+}
+
+@keyframes full-glow {
+    0%   { text-shadow: 0 0 2px @green; }
+    50%  { text-shadow: 0 0 2px @sky; }
+    100% { text-shadow: 0 0 2px @green; }
+}
+
 .modules-center {
     border-radius: 15px;
     border: 2px solid #ac4fc6;
@@ -113,17 +137,17 @@ window#waybar {
     border-radius: 10px;
 } */
 #battery.plugged {
-    text-shadow: 0 0 2px @blue;
+    animation: plugged-glow 4s ease-in-out infinite;
 }
 #battery.not-charging {
-    text-shadow: 0 0 2px @blue;
+    animation: plugged-glow 4s ease-in-out infinite;
 }
 #battery.charging {
-    text-shadow: 0 0 2px @green;
+    animation: charging-glow 3s ease-in-out infinite;
 }
 #battery.discharging {
-    text-shadow: 0 0 2px @red;
+    animation: discharging-glow 5s ease-in-out infinite;
 }
-#battery.full{
-    text-shadow: 0 0 2px @green;
+#battery.full {
+    animation: full-glow 6s ease-in-out infinite;
 }
