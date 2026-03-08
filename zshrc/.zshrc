@@ -4,7 +4,7 @@
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 export PROMPT='%m:%~ %n %# '
-export PATH=~/.local/bin:$PATH
+export PATH=~/.local/bin:~/.cargo/bin:$PATH
 export BROWSER=librewolf
 
 # Set name of the theme to load --- if set to "random", it will
