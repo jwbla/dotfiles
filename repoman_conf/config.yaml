@@ -1,6 +1,0 @@
-# ~/.config/repoman/config.yaml
-vault_dir: ~/.repoman/vault
-pristines_dir: ~/.repoman/pristines
-clones_dir: ~/.repoman/clones
-plugins_dir: ~/.repoman/plugins
-logs_dir: ~/.repoman/logs
