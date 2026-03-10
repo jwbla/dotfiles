@@ -144,7 +144,6 @@ alias tns='tmux new -s'
 alias ta='tmux a'
 alias tat='tmux a -t'
 alias oc=opencode
-alias rp=repoman
 alias gbf='git branch | fzf | sed "s/^[* ]*//" | xargs git checkout'
 pomo() {
   ~/.config/waybar/pomodoro.sh "$@"
@@ -222,7 +221,6 @@ _motd
 
 eval "$(starship init zsh)"
 eval "$(zoxide init zsh)"
-eval "$(repoman shell-init zsh)"
 
 # opencode
 export PATH=/home/jwbla/.opencode/bin:$PATH
