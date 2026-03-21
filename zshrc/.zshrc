@@ -152,10 +152,6 @@ if [ -d "$HOME/.rgtv" ]; then
     source "$HOME/.rgtv/.rgtv.sh"
 fi
 
-if [[ -f "$HOME/.hof.sh" ]]; then
-    source "$HOME/.hof.sh"
-fi
-
 # ------------------------------
 # Shell Init & MOTD
 # ------------------------------
