@@ -65,6 +65,23 @@ for file in dunstrc; do
 done
 echo "  ✅ Successfully removed dunst config"
 
+# Remove tms project config symlinks
+echo "  Removing tms project configs..."
+TMS_DIR="$HOME/.config/tms/projects"
+if [[ -d "$TMS_DIR" ]]; then
+    for target in "$TMS_DIR"/*.conf; do
+        [[ -e "$target" ]] || continue
+        file="$(basename "$target")"
+        if [[ -L "$target" ]]; then
+            rm "$target"
+            echo "    ✅ Removed $file"
+        elif [[ -e "$target" ]]; then
+            echo "    ⚠️  $file exists but is not a symlink, skipping..."
+        fi
+    done
+fi
+echo "  ✅ Successfully removed tms project configs"
+
 # Remove empty directories in ~/.config
 echo "🧹 Cleaning up empty directories..."
 find "$HOME/.config" -type d -empty -delete 2>/dev/null || true

@@ -13,6 +13,7 @@ mkdir -p ~/.config/ghostty
 mkdir -p ~/.config/starship
 mkdir -p ~/.config/dunst
 mkdir -p ~/.newsboat
+mkdir -p ~/.config/tms/projects
 
 echo "🔗 Creating symlinks with stow..."
 
@@ -102,6 +103,24 @@ link_dunst_file() {
 
 link_dunst_file "dunstrc"
 echo "  ✅ Successfully installed dunst config"
+
+# Install tms (tmux session manager) project configs
+echo "  Installing tms project configs..."
+TMS_DIR="$HOME/.config/tms/projects"
+mkdir -p "$TMS_DIR"
+for conf in "$DOTFILES_DIR"/tms_projects/*.conf; do
+    [[ -f "$conf" ]] || continue
+    file="$(basename "$conf")"
+    target="$TMS_DIR/$file"
+    if [[ -e "$target" ]] && [[ ! -L "$target" ]]; then
+        echo "    ⚠️  $file already exists and is not a symlink, skipping..."
+    else
+        [[ -L "$target" ]] && rm "$target"
+        ln -s "$conf" "$target"
+        echo "    ✅ Linked $file"
+    fi
+done
+echo "  ✅ Successfully installed tms project configs"
 
 # Install home directory symlinks
 run_stow_install "tmux_conf" "$HOME" "tmux config"

@@ -151,6 +151,9 @@ _motd() {
 if [ -d "$HOME/.rgtv" ]; then
     source "$HOME/.rgtv/.rgtv.sh"
 fi
+source ~/dev/dotfiles/tmux-session-manager.sh
+alias tt=tmux-session-manager
+alias ttv=tmux-session-manager-tv
 
 # ------------------------------
 # Shell Init & MOTD
