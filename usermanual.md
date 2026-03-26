@@ -19,6 +19,7 @@ Modifier: `Super` (Windows key)
 | `Super+E` | File manager (dolphin) |
 | `Super+D` | Database manager (sqlitebrowser) |
 | `Super+G` | FreeTube |
+| `Super+V` | Clipboard history (copyq) |
 
 ### Window Navigation
 
