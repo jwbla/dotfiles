@@ -30,6 +30,19 @@ _tms_create_session() {
   local conf="$TMS_CONFIG_DIR/${name}.conf"
   [[ -f "$conf" ]] || return 1
 
+  # First pass: run setup commands synchronously before creating windows
+  while IFS='=' read -r key val; do
+    [[ "$key" != "setup" ]] && continue
+    echo "tms: running setup: $val"
+    eval "$val"
+    local rc=$?
+    if (( rc != 0 )); then
+      echo "tms: setup command failed (exit $rc): $val" >&2
+      return 1
+    fi
+  done < "$conf"
+
+  # Second pass: create windows
   local first=1
   while IFS='=' read -r key val; do
     [[ "$key" != "window" ]] && continue
@@ -88,6 +101,7 @@ else
     while IFS='=' read -r key val; do
       case "$key" in
         root) echo "  root: $val" ;;
+        setup) echo "  setup: $val" ;;
         window)
           IFS='|' read -r wname wdir wcmd <<< "$val"
           if [[ -n "$wcmd" ]]; then
