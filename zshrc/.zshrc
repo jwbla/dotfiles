@@ -156,6 +156,11 @@ alias tt=tmux-session-manager
 alias ttv=tmux-session-manager-tv
 
 # ------------------------------
+# Machine-Specific Config
+# ------------------------------
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
+
+# ------------------------------
 # Shell Init & MOTD
 # ------------------------------
 _motd
