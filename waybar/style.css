@@ -103,12 +103,3 @@ window#waybar {
 #battery.full {
     color: @green;
 }
-#battery.plugged {
-    text-shadow: 0 0 1px @blue, 0 0 2px @blue, 0 0 2px @blue;
-}
-#battery.not-charging {
-    text-shadow: 0 0 1px @blue, 0 0 2px @blue, 0 0 2px @blue;
-}
-#battery.full {
-    text-shadow: 0 0 1px @green, 0 0 2px @green, 0 0 2px @green;
-}
