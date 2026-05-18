@@ -35,24 +35,6 @@ window#waybar {
     100% { border-color: #ac4fc6; }
 }
 
-@keyframes plugged-glow {
-    0%   { text-shadow: 0 0 1px @blue, 0 0 2px @blue, 0 0 2px @blue; }
-    50%  { text-shadow: 0 0 1px @blue, 0 0 2px @blue, 0 0 6px @lavender; }
-    100% { text-shadow: 0 0 1px @blue, 0 0 2px @blue, 0 0 2px @blue; }
-}
-
-@keyframes charging-glow {
-    0%   { text-shadow: 0 0 1px @green, 0 0 2px @green, 0 0 2px @green; }
-    50%  { text-shadow: 0 0 1px @green, 0 0 2px @green, 0 0 6px @teal; }
-    100% { text-shadow: 0 0 1px @green, 0 0 2px @green, 0 0 2px @green; }
-}
-
-@keyframes discharging-glow {
-    0%   { text-shadow: 0 0 1px @red, 0 0 2px @red, 0 0 2px @red; }
-    50%  { text-shadow: 0 0 1px @red, 0 0 2px @red, 0 0 6px @maroon; }
-    100% { text-shadow: 0 0 1px @red, 0 0 2px @red, 0 0 2px @red; }
-}
-
 .modules-center {
     border-radius: 15px;
     border: 2px solid #ac4fc6;
@@ -126,12 +108,6 @@ window#waybar {
 }
 #battery.not-charging {
     text-shadow: 0 0 1px @blue, 0 0 2px @blue, 0 0 2px @blue;
-}
-#battery.charging {
-    animation: charging-glow 3s ease-in-out infinite;
-}
-#battery.discharging {
-    animation: discharging-glow 5s ease-in-out infinite;
 }
 #battery.full {
     text-shadow: 0 0 1px @green, 0 0 2px @green, 0 0 2px @green;
