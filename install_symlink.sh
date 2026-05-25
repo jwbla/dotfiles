@@ -24,7 +24,7 @@ run_stow_install() {
     local description="$3"
     
     echo "  Installing $description..."
-    if stow -t "$target" "$package" >/dev/null 2>&1; then
+    if stow -t "$target" "$package"; then
         echo "  ✅ Successfully installed $description"
     else
         echo "  ❌ Failed to install $description"
@@ -32,8 +32,33 @@ run_stow_install() {
     fi
 }
 
-# Install config directory symlinks
-run_stow_install "hypr" "$HOME/.config/hypr" "hypr config"
+# Install hypr config files individually (stow can't overlay the default
+# hyprland.conf that Hyprland auto-generates on startup if one is missing)
+echo "  Installing hypr config files..."
+HYPR_DIR="$HOME/.config/hypr"
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+mkdir -p "$HYPR_DIR"
+
+link_hypr_file() {
+    local file="$1"
+    local source="$DOTFILES_DIR/hypr/$file"
+    local target="$HYPR_DIR/$file"
+
+    if [[ -f "$source" ]]; then
+        ln -sfn "$source" "$target"
+        echo "    ✅ Linked $file"
+        return 0
+    else
+        echo "    ❌ Source file $source not found"
+        return 1
+    fi
+}
+
+link_hypr_file "hyprland.conf"
+link_hypr_file "hyprlock.conf"
+link_hypr_file "hyprpaper.conf"
+echo "  ✅ Successfully installed hypr config"
+
 run_stow_install "waybar" "$HOME/.config/waybar" "waybar config"
 run_stow_install "kitty" "$HOME/.config/kitty" "kitty config"
 run_stow_install "alacritty" "$HOME/.config/alacritty" "alacritty config"
