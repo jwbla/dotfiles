@@ -149,6 +149,14 @@ echo "  ✅ Successfully installed tms project configs"
 
 # Install home directory symlinks
 run_stow_install "tmux_conf" "$HOME" "tmux config"
+
+# Stow refuses to overlay a pre-existing non-symlink file at the target path.
+# Back up any standalone ~/.zshenv (e.g. from a pre-dotfiles era) so the
+# zshrc package can stow cleanly without losing its contents.
+if [[ -e "$HOME/.zshenv" ]] && [[ ! -L "$HOME/.zshenv" ]]; then
+    echo "  ℹ️  Backing up existing ~/.zshenv to ~/.zshenv.predotfiles before stow"
+    mv "$HOME/.zshenv" "$HOME/.zshenv.predotfiles"
+fi
 run_stow_install "zshrc" "$HOME" "zsh config"
 
 echo "✅ Config installation complete."
