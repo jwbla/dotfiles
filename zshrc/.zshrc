@@ -45,7 +45,7 @@ alias gbf='git branch | fzf | sed "s/^[* ]*//" | xargs git checkout'
 # ------------------------------
 # Aliases: File Listing
 # ------------------------------
-alias l="eza -l --icons --git -a"
+alias l="eza -l --icons --git -a --group-directories-first"
 alias lt="eza --tree --level=2 --long --icons --git"
 alias ltree="eza --tree --level=2  --icons --git"
 
