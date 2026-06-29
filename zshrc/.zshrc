@@ -13,6 +13,11 @@ zstyle ':omz:update' mode auto
 plugins=(git)
 source $ZSH/oh-my-zsh.sh
 
+# Standalone git aliases (port of omz's git plugin). Sourced after omz for now
+# so it harmlessly redefines the same aliases; once omz is removed this becomes
+# the sole source of the g* git aliases.
+source ~/dev/dotfiles/zshrc/git-aliases.zsh
+
 # ------------------------------
 # Key Bindings
 # ------------------------------
@@ -54,6 +59,7 @@ alias ltree="eza --tree --level=2  --icons --git"
 # ------------------------------
 alias nb='newsboat -r'
 alias oc=opencode
+alias ac='claude --permission-mode auto'
 
 # ------------------------------
 # Functions
