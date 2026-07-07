@@ -10,7 +10,8 @@ command -v ghostty &> /dev/null || { echo "Error: ghostty required" >&2; exit 1;
 command -v hyprctl &> /dev/null || { echo "Error: hyprctl required" >&2; exit 1; }
 command -v jq &> /dev/null || { echo "Error: jq required" >&2; exit 1; }
 
-source "${HOME}/dev/dotfiles/tmux-session-manager.sh"
+# Resolve through the ~/.local/bin symlink so the sibling is found in the repo.
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/tmux-session-manager.sh"
 
 pkill wofi
 

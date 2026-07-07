@@ -1,22 +1,31 @@
 # ------------------------------
 # Environment & Exports
 # ------------------------------
-export ZSH="$HOME/.oh-my-zsh"
-export PROMPT='%m:%~ %n %# '
-export PATH=~/.local/bin:~/.cargo/bin:/home/jwbla/.opencode/bin:$PATH
-export BROWSER=librewolf
+# PATH and BROWSER live in .zshenv so non-interactive processes see them too.
+# Fallback prompt for shells where starship isn't installed.
+PROMPT='%m:%~ %n %# '
 
 # ------------------------------
-# Oh-My-Zsh
+# History
 # ------------------------------
-zstyle ':omz:update' mode auto
-plugins=(git)
-source $ZSH/oh-my-zsh.sh
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=50000
+SAVEHIST=50000
+setopt inc_append_history share_history hist_ignore_dups \
+       hist_expire_dups_first hist_ignore_space hist_verify
 
-# Standalone git aliases (port of omz's git plugin). Sourced after omz for now
-# so it harmlessly redefines the same aliases; once omz is removed this becomes
-# the sole source of the g* git aliases.
-source ~/dev/dotfiles/zshrc/git-aliases.zsh
+# ------------------------------
+# Completion
+# ------------------------------
+autoload -Uz compinit && compinit
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'  # case-insensitive
+
+# Standalone git aliases (port of omz's git plugin), sourced straight from the
+# repo by resolving this file's real path through the ~/.zshrc symlink.
+_dotfiles_zsh="${${(%):-%N}:A:h}"
+[[ -f "$_dotfiles_zsh/git-aliases.zsh" ]] && source "$_dotfiles_zsh/git-aliases.zsh"
+unset _dotfiles_zsh
 
 # ------------------------------
 # Key Bindings
@@ -27,7 +36,10 @@ bindkey '^R' history-incremental-search-backward
 # ------------------------------
 # Aliases: Editor
 # ------------------------------
-alias inv='nvim $(fzf --preview="bat --color=always {}")'
+# Guarded: fresh workspaces may lack fzf/bat.
+if command -v fzf >/dev/null && command -v bat >/dev/null; then
+  alias inv='nvim $(fzf --preview="bat --color=always {}")'
+fi
 alias nv=nvim
 alias n='nvim .'
 
@@ -45,14 +57,19 @@ alias tat='tmux a -t'
 # ------------------------------
 # Aliases: Git
 # ------------------------------
-alias gbf='git branch | fzf | sed "s/^[* ]*//" | xargs git checkout'
+command -v fzf >/dev/null && \
+  alias gbf='git branch | fzf | sed "s/^[* ]*//" | xargs git checkout'
 
 # ------------------------------
 # Aliases: File Listing
 # ------------------------------
-alias l="eza -l --icons --git -a --group-directories-first"
-alias lt="eza --tree --level=2 --long --icons --git"
-alias ltree="eza --tree --level=2  --icons --git"
+if command -v eza >/dev/null; then
+  alias l="eza -l --icons --git -a --group-directories-first"
+  alias lt="eza --tree --level=2 --long --icons --git"
+  alias ltree="eza --tree --level=2  --icons --git"
+else
+  alias l="ls -lA --color=auto --group-directories-first"
+fi
 
 # ------------------------------
 # Aliases: Misc
@@ -97,6 +114,10 @@ pomo() {
 }
 
 _motd() {
+  # Every tmux pane starts a new shell; only a fresh terminal gets the motd
+  # (the task/tmux calls here are the slowest part of shell startup).
+  [[ -n "$TMUX" ]] && return
+
   local sapphire='\033[38;2;116;199;236m'
   local text='\033[38;2;205;214;244m'
   local peach='\033[38;2;250;179;135m'
@@ -157,9 +178,11 @@ _motd() {
 if [ -d "$HOME/.rgtv" ]; then
     source "$HOME/.rgtv/.rgtv.sh"
 fi
-source ~/dev/dotfiles/tmux-session-manager.sh
-alias tt=tmux-session-manager
-alias ttv=tmux-session-manager-tv
+if [[ -f ~/.config/tms/tmux-session-manager.sh ]]; then
+  source ~/.config/tms/tmux-session-manager.sh
+  alias tt=tmux-session-manager
+  alias ttv=tmux-session-manager-tv
+fi
 
 # ------------------------------
 # Machine-Specific Config
@@ -170,6 +193,7 @@ alias ttv=tmux-session-manager-tv
 # Shell Init & MOTD
 # ------------------------------
 _motd
-eval "$(starship init zsh)"
-eval "$(zoxide init zsh)"
-eval "$(tv init zsh)"
+command -v starship >/dev/null && eval "$(starship init zsh)"
+command -v zoxide   >/dev/null && eval "$(zoxide init zsh)"
+command -v tv       >/dev/null && eval "$(tv init zsh)"
+true

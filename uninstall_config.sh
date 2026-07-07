@@ -1,89 +1,88 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Removes every symlink that points into this repo and restores any
+# <file>.predotfiles backups the installer made.
+set -euo pipefail
 
-echo "⚠️  This will remove all symlinks created by stow for your dotfiles."
-read -p "Are you sure you want to proceed? (y/N): " confirm
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-    echo "❌ Uninstallation aborted."
-    exit 1
+ASSUME_YES=0
+for arg in "$@"; do
+    case "$arg" in
+        -y|--yes) ASSUME_YES=1 ;;
+        *) echo "usage: $0 [-y|--yes]" >&2; exit 2 ;;
+    esac
+done
+
+echo "⚠️  This will remove all symlinks pointing into $SCRIPT_DIR."
+if (( ! ASSUME_YES )); then
+    read -p "Are you sure you want to proceed? (y/N): " confirm
+    if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+        echo "❌ Uninstallation aborted."
+        exit 1
+    fi
 fi
 
-echo "🗑️  Removing config symlinks using stow..."
+echo "🗑️  Removing dotfiles symlinks..."
 
-# Function to safely run stow commands with error checking
-run_stow_uninstall() {
-    local package="$1"
-    local target="$2"
-    local description="$3"
-    
-    echo "  Removing $description..."
-    if stow -D -t "$target" "$package" >/dev/null 2>&1; then
-        echo "  ✅ Successfully removed $description"
-    else
-        echo "  ⚠️  Warning: $description may not have been installed or already removed"
+# Every directory install.sh links into, scanned at depth 1. Matching on the
+# resolved target ("points into the repo") instead of a link map means new
+# packages never need to be added here unless they use a new directory.
+SCAN_DIRS=(
+    "$HOME"
+    "$HOME/.local/bin"
+    "$HOME/.config"
+    "$HOME/.config/hypr"
+    "$HOME/.config/waybar"
+    "$HOME/.config/kitty"
+    "$HOME/.config/alacritty"
+    "$HOME/.config/wofi"
+    "$HOME/.config/ghostty"
+    "$HOME/.config/dunst"
+    "$HOME/.config/tms"
+    "$HOME/.config/tms/projects"
+    "$HOME/.newsboat"
+)
+
+remove_repo_links() {
+    local dir="$1" l target
+    if [[ ! -d "$dir" ]]; then
+        return 0
     fi
+    while IFS= read -r l; do
+        target="$(readlink -f "$l" 2>/dev/null || true)"
+        if [[ "$target" == "$SCRIPT_DIR"/* ]]; then
+            rm "$l"
+            echo "  ✅ Removed $l"
+            if [[ -e "$l.predotfiles" ]]; then
+                mv "$l.predotfiles" "$l"
+                echo "  ℹ️  Restored $l from backup"
+            fi
+        fi
+    done < <(find "$dir" -maxdepth 1 -type l)
 }
 
-# Remove config directory symlinks (matching install script structure)
-run_stow_uninstall "hypr" "$HOME/.config/hypr" "hypr config"
-run_stow_uninstall "waybar" "$HOME/.config/waybar" "waybar config"
-run_stow_uninstall "kitty" "$HOME/.config/kitty" "kitty config"
-run_stow_uninstall "alacritty" "$HOME/.config/alacritty" "alacritty config"
-run_stow_uninstall "wofi" "$HOME/.config/wofi" "wofi config"
-run_stow_uninstall "ghostty" "$HOME/.config/ghostty" "ghostty config"
-run_stow_uninstall "starship" "$HOME/.config" "starship config"
-
-# Remove home directory symlinks
-run_stow_uninstall "tmux_conf" "$HOME" "tmux config"
-run_stow_uninstall "zshrc" "$HOME" "zsh config"
-
-# Remove newsboat config file symlinks individually
-echo "  Removing newsboat config files..."
-NEWSBOAT_DIR="$HOME/.newsboat"
-for file in config dark urls; do
-    target="$NEWSBOAT_DIR/$file"
-    if [[ -L "$target" ]]; then
-        rm "$target"
-        echo "    ✅ Removed $file"
-    elif [[ -e "$target" ]]; then
-        echo "    ⚠️  $file exists but is not a symlink, skipping..."
-    fi
+for dir in "${SCAN_DIRS[@]}"; do
+    remove_repo_links "$dir"
 done
-echo "  ✅ Successfully removed newsboat config"
 
-# Remove dunst config file symlinks individually
-echo "  Removing dunst config files..."
-DUNST_DIR="$HOME/.config/dunst"
-for file in dunstrc; do
-    target="$DUNST_DIR/$file"
-    if [[ -L "$target" ]]; then
-        rm "$target"
-        echo "    ✅ Removed $file"
-    elif [[ -e "$target" ]]; then
-        echo "    ⚠️  $file exists but is not a symlink, skipping..."
-    fi
-done
-echo "  ✅ Successfully removed dunst config"
-
-# Remove tms project config symlinks
-echo "  Removing tms project configs..."
-TMS_DIR="$HOME/.config/tms/projects"
-if [[ -d "$TMS_DIR" ]]; then
-    for target in "$TMS_DIR"/*.conf; do
-        [[ -e "$target" ]] || continue
-        file="$(basename "$target")"
-        if [[ -L "$target" ]]; then
-            rm "$target"
-            echo "    ✅ Removed $file"
-        elif [[ -e "$target" ]]; then
-            echo "    ⚠️  $file exists but is not a symlink, skipping..."
-        fi
-    done
-fi
-echo "  ✅ Successfully removed tms project configs"
-
-# Remove empty directories in ~/.config
+# Clean up only the directories this repo creates (deepest first); leave
+# anything non-empty alone.
 echo "🧹 Cleaning up empty directories..."
-find "$HOME/.config" -type d -empty -delete 2>/dev/null || true
+for dir in \
+    "$HOME/.config/tms/projects" \
+    "$HOME/.config/tms" \
+    "$HOME/.config/hypr" \
+    "$HOME/.config/waybar" \
+    "$HOME/.config/kitty" \
+    "$HOME/.config/alacritty" \
+    "$HOME/.config/wofi" \
+    "$HOME/.config/ghostty" \
+    "$HOME/.config/dunst" \
+    "$HOME/.newsboat"
+do
+    if [[ -d "$dir" ]]; then
+        rmdir --ignore-fail-on-non-empty "$dir"
+    fi
+done
 
 echo "✅ Config uninstallation complete."
