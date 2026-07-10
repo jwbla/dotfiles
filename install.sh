@@ -69,7 +69,12 @@ if [[ "$MODE" == "full" ]]; then
     done
 
     echo "🔗 Linking desktop configs..."
-    for f in hyprland.conf hyprlock.conf hyprpaper.conf; do
+    # hyprland.conf was replaced by hyprland.lua (Hyprland >= 0.55)
+    old="$HOME/.config/hypr/hyprland.conf"
+    if [[ -L "$old" && "$(readlink -f "$old" 2>/dev/null || true)" == "$SCRIPT_DIR"/* ]]; then
+        rm "$old" && echo "  🧹 removed stale $old (replaced by hyprland.lua)"
+    fi
+    for f in hyprland.lua hypridle.conf hyprlock.conf hyprpaper.conf; do
         link "hypr/$f" "$HOME/.config/hypr/$f"
     done
     for f in "$SCRIPT_DIR"/waybar/*; do
