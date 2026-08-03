@@ -30,14 +30,14 @@ window#waybar {
 }
 
 @keyframes border-glow {
-    0% { border-color: #ac4fc6; }
-    50% { border-color: #ff007f; }
-    100% { border-color: #ac4fc6; }
+    0% { border-color: #8bfa37; }
+    50% { border-color: #ba98f5; }
+    100% { border-color: #8bfa37; }
 }
 
 .modules-center {
     border-radius: 15px;
-    border: 2px solid #ac4fc6;
+    border: 2px solid #8bfa37;
     background: rgba(0,0,0,.1);
     animation: border-glow 9s linear infinite;
 }
@@ -76,7 +76,7 @@ window#waybar {
 #disk:hover,
 #custom-weather:hover,
 #tray:hover {
-    color: @lavender;
+    color: @green;
 }
 #custom-pomodoro {
     padding-bottom: 2px;

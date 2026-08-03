@@ -68,7 +68,7 @@ hl.config({
         gaps_in  = 1,
         gaps_out = 1,
 
-        border_size = 4,
+        border_size = 2,
 
         col = {
             -- candy apple red, crayola yellow, grabber blue
@@ -78,9 +78,9 @@ hl.config({
             -- i dunno catpuccin attempt to mimic tron theme
             -- active_border = { colors = {"rgba(89dcebee)", "rgba(b4befeee)"}, angle = 45 },
             -- Green and Purple
-            -- active_border = { colors = {"rgba(ba98f5ff)", "rgba(8bfa37ff)"}, angle = 45 },
+            active_border = { colors = {"rgba(ba98f5ff)", "rgba(8bfa37ff)"}, angle = 45 },
             -- Pink and Purple
-            active_border   = { colors = {"rgba(ac4fc6ff)", "rgba(ff007fff)"}, angle = 45 },
+            -- active_border   = { colors = {"rgba(ac4fc6ff)", "rgba(ff007fff)"}, angle = 45 },
             inactive_border = "rgba(595959aa)",
         },
 
