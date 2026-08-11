@@ -78,6 +78,7 @@ alias nb='newsboat -r'
 alias oc=opencode
 alias ac='claude --permission-mode auto'
 alias x=exit
+alias q=exit
 
 # ------------------------------
 # Functions
