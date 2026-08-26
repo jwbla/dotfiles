@@ -315,9 +315,16 @@ lua_ls, clangd, jsonls, html, glsl_analyzer, ts_ls, gopls, yamlls, bashls, sqlls
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+R` | Reverse history search |
+| `Ctrl+R` | Atuin search — fuzzy, across all history |
+| `Up` | Atuin search, pre-filtered by what's already typed |
+| `Enter` | (in atuin) Run the selected command |
+| `Tab` | (in atuin) Put it on the prompt instead of running it |
+| `Ctrl+O` | (in atuin) Inspect the highlighted entry |
+| `Ctrl+D` | (in atuin inspector) Delete that entry from history |
+| `Esc` | (in atuin) Cancel, restore the original line |
 
-Vi mode enabled (`bindkey -v`).
+Vi mode enabled (`bindkey -v`). Atuin is optional: without it, `Ctrl+R` falls
+back to zsh's `history-incremental-search-backward` and `Up` to plain history.
 
 ### Aliases
 
@@ -353,6 +360,8 @@ Vi mode enabled (`bindkey -v`).
 
 ### Tools & Prompt
 
+- **Atuin** - shell history in SQLite, `Ctrl+R`/`Up` search. Config at
+  `atuin/config.toml`; history hygiene commands in the repo README
 - **Starship** - custom prompt
 - **Zoxide** - smart `cd` (`z` command)
 - **tv** - terminal viewer

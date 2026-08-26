@@ -72,6 +72,48 @@ The zshrc degrades gracefully when tools are missing, but expects:
 
 - **core**: zsh, tmux, starship, fzf
 - **nice to have**: eza (`l`/`lt`), bat (`inv` preview), zoxide, git-delta,
-  television (`tv`)
+  television (`tv`), atuin (Ctrl+R / Up history search — see below)
 - **desktop**: hyprland, waybar, wofi, dunst, newsboat, taskwarrior (motd),
   ghostty/kitty/alacritty
+
+## atuin
+
+Shell history lives in atuin's SQLite db (`~/.local/share/atuin/history.db`)
+instead of being grepped out of `~/.zsh_history`. The zshrc guard means
+machines without atuin fall back to zsh's `Ctrl+R` untouched.
+
+```
+sudo pacman -S atuin      # Arch; extra/atuin
+atuin import auto         # one-time: pull in existing ~/.zsh_history
+```
+
+`atuin/config.toml` is symlinked to `~/.config/atuin/config.toml`. It ships a
+`history_filter` that drops noise (single-char aliases, bare `ls`/`cd`) and
+anything carrying `--password`/`--token`.
+
+**Cleaning history** — filters only apply going forward, so after editing
+`history_filter`:
+
+```
+atuin history prune --dry-run     # preview what the filters would remove
+atuin history prune               # commit
+atuin search --delete '<query>'   # delete by query (refuses to run bare)
+atuin history dedup --before <date> --dupkeep 1
+```
+
+In the search TUI, `Ctrl+O` opens the inspector on the highlighted entry and
+`Ctrl+D` deletes it.
+
+**Preserving commands** — atuin has no pin/favorite flag; history is meant to
+be disposable. Commands worth keeping permanently go in this repo
+(`zshrc/.zshrc`), or in atuin's own alias store, which no prune or delete
+touches:
+
+```
+atuin dotfiles alias set deploy 'some long command'
+atuin dotfiles alias list
+```
+
+Sync is off (`auto_sync = false`) — there's no server yet. If one is added,
+back up `~/.local/share/atuin/key` first; sync is end-to-end encrypted and the
+server cannot recover that key for you.

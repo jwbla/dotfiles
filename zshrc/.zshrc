@@ -31,6 +31,8 @@ unset _dotfiles_zsh
 # Key Bindings
 # ------------------------------
 bindkey -v
+# Fallback only: `atuin init` at the bottom of this file rebinds ^R (and Up)
+# when atuin is installed. This keeps ^R useful on machines without it.
 bindkey '^R' history-incremental-search-backward
 
 # ------------------------------
@@ -199,4 +201,6 @@ _motd
 command -v starship >/dev/null && eval "$(starship init zsh)"
 command -v zoxide   >/dev/null && eval "$(zoxide init zsh)"
 command -v tv       >/dev/null && eval "$(tv init zsh)"
+# Last: atuin rebinds ^R and Up, so it must load after the Key Bindings block.
+command -v atuin    >/dev/null && eval "$(atuin init zsh)"
 true

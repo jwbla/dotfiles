@@ -58,6 +58,7 @@ link zshrc/.zshenv           "$HOME/.zshenv"
 link zshrc/.zshrc            "$HOME/.zshrc"
 link tmux_conf/.tmux.conf    "$HOME/.tmux.conf"
 link starship/starship.toml  "$HOME/.config/starship.toml"
+link atuin/config.toml       "$HOME/.config/atuin/config.toml"
 link bin/tmux-session-manager.sh "$HOME/.config/tms/tmux-session-manager.sh"
 
 if [[ "$MODE" == "full" ]]; then

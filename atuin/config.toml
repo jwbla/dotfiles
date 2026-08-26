@@ -1,0 +1,91 @@
+# Atuin client config — symlinked to ~/.config/atuin/config.toml by install.sh.
+# Full reference: https://docs.atuin.sh/configuration/config/
+#
+# Only options that deviate from the default (or that are worth knowing about)
+# are uncommented. Everything else is left at atuin's default on purpose.
+
+# ------------------------------
+# Sync
+# ------------------------------
+# No sync server yet — history is local-only, in ~/.local/share/atuin/history.db.
+# To point at a self-hosted server later:
+#   sync_address = "http://127.0.0.1:8888"
+#   atuin register -u <user> -e <email>   # then: atuin sync
+# NOTE: sync is E2E encrypted with ~/.local/share/atuin/key — back that key up
+# before syncing anywhere, it is NOT recoverable from the server.
+auto_sync = false
+
+# pacman owns the atuin version on this box; don't nag about upstream releases.
+update_check = false
+
+# ------------------------------
+# UI
+# ------------------------------
+style = "compact"
+inline_height = 20
+show_preview = true
+
+# Enter runs the selected command immediately; Tab puts it on the line to edit.
+# This is atuin's default and it keeps "Up, Enter" = rerun last command working.
+# Set to false if you'd rather every selection land on the prompt for review.
+enter_accept = true
+
+# ------------------------------
+# History hygiene — prevention
+# ------------------------------
+# Commands matching any of these regexes are NEVER written to history.
+# Unanchored, so use ^ and $ to match a whole command.
+#
+# After editing this list, retroactively clean already-recorded entries:
+#   atuin history prune --dry-run    # preview
+#   atuin history prune              # commit
+history_filter = [
+  # Single-char aliases and other pure noise (see zshrc "Aliases: Misc").
+  "^c$",            # clear
+  "^x$",            # exit
+  "^q$",            # exit
+  "^l$",            # eza listing
+  "^n$",            # nvim .
+  "^t$",            # tmux picker
+  "^clear$",
+  "^exit$",
+  "^pwd$",
+  "^ls$",           # bare ls only — "ls -la" is still recorded
+  "^cd$",
+  "^cd \\.\\.$",
+  # Credentials that atuin's built-in secrets_filter doesn't already catch.
+  "--password",
+  "--token[= ]",
+]
+
+# Commands run from these directories are never recorded.
+# cwd_filter = [
+#   "^/tmp",
+#   "/node_modules/",
+# ]
+
+# Built-in regexes for AWS keys, GitHub PATs, Slack tokens/webhooks, Stripe
+# keys, etc. On by default — listed here so it's visible, not to change it.
+secrets_filter = true
+
+# A command typed with a leading space is not recorded (zsh hist_ignore_space
+# is already set in .zshrc, and atuin honors the same convention).
+
+# ------------------------------
+# History hygiene — preservation
+# ------------------------------
+# Atuin has no "pin this entry" flag: history is disposable by design, and
+# every delete is query-scoped (`atuin search --delete` refuses to run without
+# a query). Commands you want to keep FOREVER belong in one of two places:
+#
+#   1. This dotfiles repo (zshrc/.zshrc, zshrc/git-aliases.zsh) — version
+#      controlled, reviewable, portable. Prefer this.
+#   2. Atuin's own alias store, below — survives every prune/delete because it
+#      is not history, and rides along with sync if that's ever enabled:
+#        atuin dotfiles alias set deploy 'long command here'
+#        atuin dotfiles alias list
+#
+# Caveat: atuin init runs last in .zshrc, so an alias defined here SHADOWS a
+# same-named alias from zshrc. Keep the two sets disjoint.
+[dotfiles]
+enabled = true
