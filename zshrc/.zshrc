@@ -81,7 +81,10 @@ alias oc=opencode
 alias ac='claude --permission-mode auto'
 alias x=exit
 alias q=exit
-alias c=clear
+alias cl=clear
+alias cls=clear
+alias c=claude
+alias cc='claude --continue'
 
 # ------------------------------
 # Functions
