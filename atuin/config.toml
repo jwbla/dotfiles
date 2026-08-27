@@ -11,8 +11,10 @@
 # To point at a self-hosted server later:
 #   sync_address = "http://127.0.0.1:8888"
 #   atuin register -u <user> -e <email>   # then: atuin sync
-# NOTE: sync is E2E encrypted with ~/.local/share/atuin/key — back that key up
-# before syncing anywhere, it is NOT recoverable from the server.
+# NOTE: sync is E2E encrypted with ~/.local/share/atuin/key. That key already
+# exists here — it was generated locally, because [dotfiles] below needs it
+# even with sync off (see the caveat there). It is NOT recoverable from the
+# server, so back it up before syncing anywhere.
 auto_sync = false
 
 # pacman owns the atuin version on this box; don't nag about upstream releases.
@@ -85,7 +87,16 @@ secrets_filter = true
 #        atuin dotfiles alias set deploy 'long command here'
 #        atuin dotfiles alias list
 #
-# Caveat: atuin init runs last in .zshrc, so an alias defined here SHADOWS a
+# Caveat 1: atuin init runs last in .zshrc, so an alias defined here SHADOWS a
 # same-named alias from zshrc. Keep the two sets disjoint.
+#
+# Caveat 2: the alias store is encrypted, so enabled = true makes EVERY
+# `atuin init zsh` load ~/.local/share/atuin/key. If that file is missing,
+# init exits 1 ("could not load encryption key") and NO atuin hooks install —
+# Ctrl+R silently falls back to zsh's search and nothing is recorded. Only
+# `atuin register`/`atuin login` create that key, so on a sync-less machine
+# generate one before enabling this:
+#     openssl rand 32 | base64 -w0 > ~/.local/share/atuin/key
+#     chmod 600 ~/.local/share/atuin/key
 [dotfiles]
 enabled = true

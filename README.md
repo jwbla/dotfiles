@@ -85,7 +85,16 @@ machines without atuin fall back to zsh's `Ctrl+R` untouched.
 ```
 sudo pacman -S atuin      # Arch; extra/atuin
 atuin import auto         # one-time: pull in existing ~/.zsh_history
+
+# one-time: the alias store below is encrypted and `atuin init` refuses to
+# run without a key. register/login would create one; with no sync server:
+openssl rand 32 | base64 -w0 > ~/.local/share/atuin/key
+chmod 600 ~/.local/share/atuin/key
 ```
+
+Skip that key step and every new shell prints `could not load encryption key`,
+`atuin init` exits 1, and no hooks install — `Ctrl+R` quietly falls back to
+zsh and nothing is recorded.
 
 `atuin/config.toml` is symlinked to `~/.config/atuin/config.toml`. It ships a
 `history_filter` that drops noise (single-char aliases, bare `ls`/`cd`) and
@@ -114,6 +123,7 @@ atuin dotfiles alias set deploy 'some long command'
 atuin dotfiles alias list
 ```
 
-Sync is off (`auto_sync = false`) — there's no server yet. If one is added,
-back up `~/.local/share/atuin/key` first; sync is end-to-end encrypted and the
-server cannot recover that key for you.
+Sync is off (`auto_sync = false`) — there's no server yet. The key at
+`~/.local/share/atuin/key` was generated locally (see above) rather than by
+`atuin register`. Back it up before adding a server: sync is end-to-end
+encrypted and the server cannot recover that key for you.
