@@ -33,6 +33,7 @@ SCAN_DIRS=(
     "$HOME/.config"
     "$HOME/.config/hypr"
     "$HOME/.config/waybar"
+    "$HOME/.config/quickshell"
     "$HOME/.config/kitty"
     "$HOME/.config/alacritty"
     "$HOME/.config/wofi"

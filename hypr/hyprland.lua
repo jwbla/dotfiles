@@ -42,6 +42,9 @@ local freetube    = "flatpak run io.freetubeapp.FreeTube"
 hl.on("hyprland.start", function()
     hl.exec_cmd("hyprpaper")
     hl.exec_cmd("waybar")
+    -- Command Center panel (SUPER+A); started here so the IPC target exists
+    -- before the first keypress.
+    hl.exec_cmd("qs -d -c commandcenter")
     hl.exec_cmd("hypridle")
     hl.exec_cmd(terminal)
 end)
@@ -220,7 +223,11 @@ end
 -- Workspace switcher with wofi
 hl.bind(mainMod .. " + TAB", hl.dsp.exec_cmd("~/.local/bin/workspace_switcher.sh"))
 
--- Tmux project picker with wofi
+-- Command Center panel (tasks + time tracking + tmux projects)
+-- `grave` is the bare ~ key, so no shift is needed to summon it.
+hl.bind(mainMod .. " + grave", hl.dsp.exec_cmd("qs -c commandcenter ipc call cc toggle"))
+
+-- Tmux project picker with wofi (also the fallback if quickshell is missing)
 hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("~/.local/bin/tmux-wofi.sh"))
 
 -- Special workspace (scratchpad)

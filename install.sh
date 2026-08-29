@@ -81,6 +81,9 @@ if [[ "$MODE" == "full" ]]; then
     for f in "$SCRIPT_DIR"/waybar/*; do
         link "waybar/$(basename "$f")" "$HOME/.config/waybar/$(basename "$f")"
     done
+    # Quickshell configs are whole directory trees, so link the package itself
+    # rather than each file; `qs -c commandcenter` resolves it by that name.
+    link quickshell               "$HOME/.config/quickshell/commandcenter"
     link kitty/kitty.conf         "$HOME/.config/kitty/kitty.conf"
     link alacritty/alacritty.toml "$HOME/.config/alacritty/alacritty.toml"
     link wofi/config              "$HOME/.config/wofi/config"

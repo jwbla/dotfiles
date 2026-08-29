@@ -75,6 +75,10 @@ The zshrc degrades gracefully when tools are missing, but expects:
   television (`tv`), atuin (Ctrl+R / Up history search — see below)
 - **desktop**: hyprland, waybar, wofi, dunst, newsboat, taskwarrior (motd),
   ghostty/kitty/alacritty
+- **quickshell**: `quickshell` (extra/) for the Command Center panel on
+  ``SUPER+` `` — tasks, time tracking and tmux projects; also needs
+  timewarrior. Without it that bind does nothing; `SUPER+A` still opens the
+  wofi tmux picker.
 
 ## atuin
 
