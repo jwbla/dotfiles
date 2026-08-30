@@ -42,8 +42,8 @@ local freetube    = "flatpak run io.freetubeapp.FreeTube"
 hl.on("hyprland.start", function()
     hl.exec_cmd("hyprpaper")
     hl.exec_cmd("waybar")
-    -- Command Center panel (SUPER+A); started here so the IPC target exists
-    -- before the first keypress.
+    -- Command Center (SUPER+`) and rgtv glance (SUPER+R) panels; started here
+    -- so the IPC targets exist before the first keypress.
     hl.exec_cmd("qs -d -c commandcenter")
     hl.exec_cmd("hypridle")
     hl.exec_cmd(terminal)
@@ -226,6 +226,10 @@ hl.bind(mainMod .. " + TAB", hl.dsp.exec_cmd("~/.local/bin/workspace_switcher.sh
 -- Command Center panel (tasks + time tracking + tmux projects)
 -- `grave` is the bare ~ key, so no shift is needed to summon it.
 hl.bind(mainMod .. " + grave", hl.dsp.exec_cmd("qs -c commandcenter ipc call cc toggle"))
+
+-- rgtv at a glance: Prometheus alerts, Gitea PRs + CI, fleet health, Grafana
+-- links. Same quickshell instance as the Command Center, other side of the screen.
+hl.bind(mainMod .. " + R",     hl.dsp.exec_cmd("qs -c commandcenter ipc call rgtv toggle"))
 
 -- Tmux project picker with wofi (also the fallback if quickshell is missing)
 hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("~/.local/bin/tmux-wofi.sh"))

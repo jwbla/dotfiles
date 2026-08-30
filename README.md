@@ -79,6 +79,15 @@ The zshrc degrades gracefully when tools are missing, but expects:
   ``SUPER+` `` — tasks, time tracking and tmux projects; also needs
   timewarrior. Without it that bind does nothing; `SUPER+A` still opens the
   wofi tmux picker.
+- **rgtv glance** (`SUPER+R`, same quickshell instance): the rgtv fleet at a
+  glance — firing Prometheus alerts, open Gitea PRs with their CI state,
+  whether every repo's master is green, fleet services with the homepage's
+  health probe, and Grafana dashboards. Everything is a clickable link;
+  right-click on a PR or repo jumps to CI. Data comes from
+  `bin/rgtv_glance.sh` (curl + jq against the LAN; the Gitea token is read
+  from `tea`'s login, so `tea login add` once for gitea.i.realgamers.tv).
+  Re-polls every 30s while open; `qs -c commandcenter ipc call rgtv refresh`
+  forces one from a script.
 
 ## atuin
 

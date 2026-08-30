@@ -56,7 +56,7 @@ ColumnLayout {
         }
 
         Text {
-            text: root.collapsed ? "" : ""
+            text: root.collapsed ? "\uf054" : "\uf078"
             color: Theme.overlay1
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeSmall
