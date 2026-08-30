@@ -1,0 +1,91 @@
+# {{stamp}}
+#
+# The NeuToast recipe (src/neu/neu-toast/neu-toast.css) in dunst. dunst is no
+# longer the notification daemon -- the Quickshell NotificationLayer is -- but it
+# stays configured so panic mode and any bare `dunstify` still look right.
+#
+# dunst can only draw a full frame, not a left rail, so the toast's 4px accent
+# rail becomes a 4px accent frame, tinted per urgency exactly as the web toast is.
+
+[global]
+    monitor = 0
+    follow = mouse
+
+    width = (280, 420)
+    height = (0, 300)
+    origin = top-right
+    offset = ({{shadow_l_gap}}, {{barHeightPlusGap}})
+    scale = 0
+    notification_limit = 5
+
+    progress_bar = true
+    progress_bar_height = {{size_s}}
+    progress_bar_frame_width = 0
+    progress_bar_min_width = 180
+    progress_bar_max_width = 380
+    progress_bar_corner_radius = {{size_xs}}
+
+    indicate_hidden = yes
+    separator_height = {{shadow_l_gap}}
+    padding = {{size_m}}
+    horizontal_padding = {{size_l}}
+    text_icon_padding = {{size_m}}
+    frame_width = {{border_l}}
+    gap_size = {{shadow_l_gap}}
+    corner_radius = {{radius_m}}
+
+    separator_color = frame
+    sort = yes
+
+    font = {{family_mono}} {{font_m}}
+    line_height = 0
+    markup = full
+    format = "<b>%s</b>\n%b"
+    alignment = left
+    vertical_alignment = center
+    show_age_threshold = 60
+    ellipsize = end
+    ignore_newline = no
+    stack_duplicates = true
+    hide_duplicate_count = false
+    show_indicators = no
+
+    enable_recursive_icon_lookup = true
+    icon_theme = breeze-dark
+    icon_position = left
+    min_icon_size = 24
+    max_icon_size = 48
+
+    sticky_history = yes
+    history_length = 20
+    browser = librewolf
+    always_run_script = true
+    title = dunst
+    class = dunst
+    corner_radius_bottom = {{radius_m}}
+    ignore_dbusclose = false
+
+    mouse_left_click = close_current
+    mouse_middle_click = do_action, close_current
+    mouse_right_click = close_all
+
+[urgency_low]
+    background = "{{bgCard}}"
+    foreground = "{{textMuted}}"
+    frame_color = "{{textDim}}"
+    highlight = "{{primary}}"
+    timeout = 6
+
+[urgency_normal]
+    background = "{{bgCard}}"
+    foreground = "{{text}}"
+    frame_color = "{{primary}}"
+    highlight = "{{primary}}"
+    timeout = 8
+
+[urgency_critical]
+    background = "{{bgCard}}"
+    foreground = "{{text}}"
+    frame_color = "{{error}}"
+    highlight = "{{error}}"
+    timeout = 0

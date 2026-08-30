@@ -1,3 +1,12 @@
+# alacritty is not installed on this machine; kept in sync for parity.
+
+[general]
+import = ["~/.config/alacritty/neu.toml"]
+
 [font]
 size = 12.0
-normal = { family = "UbuntuMonoNerdFont" }
+normal = { family = "UbuntuMono Nerd Font" }
+
+[window]
+opacity = 0.97
+padding = { x = 8, y = 6 }

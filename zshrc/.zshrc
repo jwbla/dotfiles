@@ -116,21 +116,26 @@ load_tmux() {
   fi
 }
 
-pomo() {
-  ~/.config/waybar/pomodoro.sh "$@"
-  pkill -RTMIN+8 waybar
-}
-
 _motd() {
   # Every tmux pane starts a new shell; only a fresh terminal gets the motd
   # (the task/tmux calls here are the slowest part of shell startup).
   [[ -n "$TMUX" ]] && return
 
-  local sapphire='\033[38;2;116;199;236m'
-  local text='\033[38;2;205;214;244m'
-  local peach='\033[38;2;250;179;135m'
-  local overlay0='\033[38;2;108;112;134m'
-  local reset='\033[0m'
+  # Palette comes from the generated neu tokens (bin/neu-colors.sh) so the motd
+  # can't drift from the rest of the desktop. The old hardcoded Catppuccin
+  # escapes are the fallback if the theme isn't installed.
+  local sapphire text peach overlay0 reset
+  if [[ -r "$HOME/.local/bin/neu-colors.sh" ]]; then
+    source "$HOME/.local/bin/neu-colors.sh"
+    sapphire=$NEU_ACCENT; text=$NEU_TEXT; peach=$NEU_WARNING
+    overlay0=$NEU_DIM;    reset=$NEU_RESET
+  else
+    sapphire='\033[38;2;116;199;236m'
+    text='\033[38;2;205;214;244m'
+    peach='\033[38;2;250;179;135m'
+    overlay0='\033[38;2;108;112;134m'
+    reset='\033[0m'
+  fi
 
   local date_str
   date_str=$(date +"%a %b %d")

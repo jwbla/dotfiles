@@ -1,0 +1,255 @@
+# {{stamp}}
+#
+# The powerline ribbon retuned from Catppuccin to the @rgtv/neu brand sweep:
+# deep violet -> violet -> magenta -> teal. Each segment's ink is picked by the
+# design system's own onAccent() rule (src/themes.ts), which is why the
+# #8b2fe0 segment takes pure white -- the themed #cdd6f4 only reaches 4.06:1
+# there, under the AA floor.
+#
+# To back just the prompt out without touching anything else:
+#     palette = 'catppuccin_mocha'
+
+"$schema" = 'https://starship.rs/config-schema.json'
+
+format = """
+[{{u_e0b6}}](ramp1)\
+$os\
+$username\
+$hostname\
+[{{u_e0b0}}](bg:ramp2 fg:ramp1)\
+$directory\
+[{{u_e0b0}}](bg:ramp3 fg:ramp2)\
+$git_branch\
+$git_status\
+[{{u_e0b0}}](fg:ramp3 bg:ramp4)\
+$c\
+$rust\
+$golang\
+$nodejs\
+$php\
+$java\
+$kotlin\
+$haskell\
+$python\
+[{{u_e0b0}}](fg:ramp4 bg:ramp5)\
+${custom.tasks}\
+${custom.timew}\
+$docker_context\
+[{{u_e0b0}}](fg:ramp5 bg:ramp6)\
+$time\
+[{{u_e0b4}}](fg:ramp6)\
+$cmd_duration\
+$line_break\
+$character"""
+
+palette = 'neu'
+
+[os]
+disabled = false
+style = "bg:ramp1 fg:ink1"
+
+[os.symbols]
+Windows = "{{u_e70f}}"
+Ubuntu = "{{u_f0548}}"
+SUSE = "{{u_f314}}"
+Raspbian = "{{u_f043f}}"
+Mint = "{{u_f08ed}}"
+Macos = "{{u_f0035}}"
+Manjaro = "{{u_f312}}"
+Linux = "{{u_f033d}}"
+Gentoo = "{{u_f08e8}}"
+Fedora = "{{u_f08db}}"
+Alpine = "{{u_f300}}"
+Amazon = "{{u_f270}}"
+Android = "{{u_e70e}}"
+Arch = "{{u_f08c7}}"
+Artix = "{{u_f08c7}}"
+CentOS = "{{u_f304}}"
+Debian = "{{u_f08da}}"
+Redhat = "{{u_f111b}}"
+RedHatEnterprise = "{{u_f111b}}"
+
+[username]
+show_always = true
+style_user = "bg:ramp1 fg:ink1"
+style_root = "bg:ramp1 fg:error"
+format = '[ $user]($style)'
+
+[hostname]
+ssh_only = true
+style = "bg:ramp1 fg:ink1"
+format = '[ $ssh_symbol on $hostname]($style)'
+trim_at = '.companyname.com'
+disabled = false
+
+[directory]
+style = "bg:ramp2 fg:ink2"
+format = "[ $path ]($style)"
+truncation_length = 3
+truncation_symbol = "…/"
+
+[directory.substitutions]
+"Documents" = "{{u_f0219}} "
+"Downloads" = "{{u_f019}} "
+"Music" = "{{u_f075a}} "
+"Pictures" = "{{u_f03e}} "
+"Developer" = "{{u_f0c8b}} "
+"Home" = "{{u_f015}}"
+"~" = "{{u_f015}}"
+
+[git_branch]
+symbol = "{{u_f418}}"
+style = "bg:ramp3"
+format = '[[ $symbol $branch ](fg:ink3 bg:ramp3)]($style)'
+
+[git_status]
+style = "bg:ramp3"
+format = '[[($all_status$ahead_behind )](fg:ink3 bg:ramp3)]($style)'
+
+[nodejs]
+symbol = "{{u_e718}}"
+style = "bg:ramp4"
+format = '[[ $symbol( $version) ](fg:ink4 bg:ramp4)]($style)'
+
+[c]
+symbol = "{{u_e61e}} "
+style = "bg:ramp4"
+format = '[[ $symbol( $version) ](fg:ink4 bg:ramp4)]($style)'
+
+[rust]
+symbol = "{{u_e7a8}}"
+style = "bg:ramp4"
+format = '[[ $symbol( $version) ](fg:ink4 bg:ramp4)]($style)'
+
+[golang]
+symbol = "{{u_e627}}"
+style = "bg:ramp4"
+format = '[[ $symbol( $version) ](fg:ink4 bg:ramp4)]($style)'
+
+[php]
+symbol = "{{u_e608}}"
+style = "bg:ramp4"
+format = '[[ $symbol( $version) ](fg:ink4 bg:ramp4)]($style)'
+
+[java]
+symbol = "{{u_e256}} "
+style = "bg:ramp4"
+format = '[[ $symbol( $version) ](fg:ink4 bg:ramp4)]($style)'
+
+[kotlin]
+symbol = "{{u_e634}}"
+style = "bg:ramp4"
+format = '[[ $symbol( $version) ](fg:ink4 bg:ramp4)]($style)'
+
+[haskell]
+symbol = "{{u_e61f}}"
+style = "bg:ramp4"
+format = '[[ $symbol( $version) ](fg:ink4 bg:ramp4)]($style)'
+
+[python]
+symbol = "{{u_e606}}"
+style = "bg:ramp4"
+format = '[[ $symbol( $version)(\(#$virtualenv\)) ](fg:ink4 bg:ramp4)]($style)'
+
+[docker_context]
+symbol = "{{u_f308}}"
+style = "bg:ramp5"
+format = '[[ $symbol( $context) ](fg:ink5 bg:ramp5)]($style)'
+
+[custom.tasks]
+command = "task due.before:+24h status:pending count 2>/dev/null"
+when = "[ $(task due.before:+24h status:pending count 2>/dev/null) -gt 0 ]"
+symbol = "{{u_f0132}} "
+style = "fg:ink5 bg:ramp5"
+format = '[ $symbol$output ]($style)'
+shell = ["bash", "--noprofile", "--norc"]
+
+# The symbol here was an empty string on disk -- a nerd glyph that got lost in a
+# previous edit. Restored by codepoint (U+F017, clock).
+[custom.timew]
+command = "timew get dom.active.tag.1 2>/dev/null"
+when = "[ $(timew get dom.active 2>/dev/null) = 1 ]"
+symbol = "{{u_f017}} "
+style = "fg:ink5 bg:ramp5"
+format = '[ $symbol$output ]($style)'
+shell = ["bash", "--noprofile", "--norc"]
+
+[time]
+disabled = false
+time_format = "%R"
+style = "bg:ramp6"
+format = '[[ {{u_f43a}} $time ](fg:ink6 bg:ramp6)]($style)'
+
+[line_break]
+disabled = true
+
+[character]
+disabled = false
+success_symbol = '[❯](bold fg:success)'
+error_symbol = '[❯](bold fg:error)'
+vimcmd_symbol = '[❮](bold fg:success)'
+vimcmd_replace_one_symbol = '[❮](bold fg:accent)'
+vimcmd_replace_symbol = '[❮](bold fg:accent)'
+vimcmd_visual_symbol = '[❮](bold fg:warning)'
+
+[cmd_duration]
+show_milliseconds = true
+format = " {{u_eaf4}} in $duration "
+style = "fg:dim"
+disabled = false
+show_notifications = false
+min_time_to_notify = 45000
+
+# The brand sweep. ink* are computed, not chosen -- see the header.
+[palettes.neu]
+ramp1 = "{{accent_darkest}}"
+ramp2 = "{{accent_darker}}"
+ramp3 = "{{primary}}"
+ramp4 = "{{accent_light}}"
+ramp5 = "{{secondary}}"
+ramp6 = "{{tertiary}}"
+ink1 = "{{ink_accent_darkest}}"
+ink2 = "{{ink_accent_darker}}"
+ink3 = "{{ink_primary}}"
+ink4 = "{{ink_accent_light}}"
+ink5 = "{{ink_secondary}}"
+ink6 = "{{ink_tertiary}}"
+accent = "{{primary}}"
+accent2 = "{{secondary}}"
+accent3 = "{{tertiary}}"
+text = "{{text}}"
+muted = "{{textMuted}}"
+dim = "{{textDim}}"
+success = "{{success}}"
+error = "{{error}}"
+warning = "{{warning}}"
+info = "{{info}}"
+
+# Kept so `palette = 'catppuccin_mocha'` above is a one-line prompt-only revert.
+[palettes.catppuccin_mocha]
+rosewater = "#f5e0dc"
+flamingo = "#f2cdcd"
+pink = "#f5c2e7"
+mauve = "#cba6f7"
+red = "#f38ba8"
+maroon = "#eba0ac"
+peach = "#fab387"
+yellow = "#f9e2af"
+green = "#a6e3a1"
+teal = "#94e2d5"
+sky = "#89dceb"
+sapphire = "#74c7ec"
+blue = "#89b4fa"
+lavender = "#b4befe"
+text = "#cdd6f4"
+subtext1 = "#bac2de"
+subtext0 = "#a6adc8"
+overlay2 = "#9399b2"
+overlay1 = "#7f849c"
+overlay0 = "#6c7086"
+surface2 = "#585b70"
+surface1 = "#45475a"
+surface0 = "#313244"
+base = "#1e1e2e"
+mantle = "#181825"
+crust = "#11111b"

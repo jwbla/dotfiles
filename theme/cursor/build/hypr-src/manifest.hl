@@ -1,0 +1,4 @@
+name = neu
+description = @rgtv/neu cursor, generated from theme/tokens.json
+version = 1
+cursors_directory = cursors

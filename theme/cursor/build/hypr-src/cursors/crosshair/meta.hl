@@ -1,0 +1,10 @@
+resize_algorithm = bilinear
+hotspot_x = 0.5000
+hotspot_y = 0.5000
+define_size = 0, 0.svg
+define_override = cross
+define_override = cross_reverse
+define_override = diamond_cross
+define_override = tcross
+define_override = cell
+define_override = color-picker

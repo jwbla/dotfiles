@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"
+     viewBox="0 0 24 24">
+  <defs>
+    <filter id="cast" x="-60%" y="-60%" width="240%" height="240%"
+            color-interpolation-filters="sRGB">
+      <feDropShadow dx="0.9" dy="1.1" stdDeviation="0.9"
+                    flood-color="#000000" flood-opacity="0.75"/>
+    </filter>
+  </defs>
+  <g filter="url(#cast)">
+    <g fill="#8b2fe0" stroke="#8b2fe0" stroke-width="2.6"
+       stroke-linejoin="round" stroke-linecap="round">
+      <path d="M3.40,12.00 L7.80,8.60 L7.80,15.40 Z"/>
+  <path d="M11.60,10.50 L7.20,10.50 L7.20,13.50 L11.60,13.50 Z"/>
+  <path d="M20.60,12.00 L16.20,15.40 L16.20,8.60 Z"/>
+  <path d="M12.40,13.50 L16.80,13.50 L16.80,10.50 L12.40,10.50 Z"/>
+    </g>
+    <g fill="#cccccc">
+      <path d="M3.40,12.00 L7.80,8.60 L7.80,15.40 Z"/>
+  <path d="M11.60,10.50 L7.20,10.50 L7.20,13.50 L11.60,13.50 Z"/>
+  <path d="M20.60,12.00 L16.20,15.40 L16.20,8.60 Z"/>
+  <path d="M12.40,13.50 L16.80,13.50 L16.80,10.50 L12.40,10.50 Z"/>
+    </g>
+  </g>
+</svg>

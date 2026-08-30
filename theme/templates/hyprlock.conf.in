@@ -1,0 +1,117 @@
+# {{stamp}}
+#
+# The NeuOS lock screen, ported from the LockOverlay in
+# ~/dev/rgtv-ds/src/demos6.stories.tsx: accent radial ground, big clock, date,
+# the avatar disc, and the password field as an inset well with a brand outline.
+
+$font = {{family_mono}}
+$accent_ramp = {{hl_primary}} {{hl_secondary}} 45deg
+
+general {
+    hide_cursor = false
+}
+
+animations {
+    enabled = true
+    bezier = neu, 0.4, 0, 0.2, 1
+    animation = fadeIn,         1, {{motion_fast_ds}}, neu
+    animation = fadeOut,        1, {{motion_fast_ds}}, neu
+    animation = inputFieldDots, 1, 2, neu
+}
+
+# The generated wallpaper already IS the accent radial gradient the story uses
+# (mix(accent 38%, bg) top-left, tertiary bloom bottom-right), so the lock ground
+# is the desktop ground, softened.
+background {
+    monitor =
+    path = {{repo_root}}/theme/wall/neu-{{wall_w}}x{{wall_h}}.png
+    blur_passes = 2
+    blur_size = 6
+    brightness = 0.75
+}
+
+# TIME -- 4rem bold in the story
+label {
+    monitor =
+    text = $TIME
+    font_size = 64
+    font_family = $font
+    color = {{hl_text}}
+    position = 0, 210
+    halign = center
+    valign = center
+}
+
+# DATE
+label {
+    monitor =
+    text = cmd[update:60000] date +"%A, %B %-d"
+    font_size = {{font_xl}}
+    font_family = $font
+    color = {{hl_textMuted}}
+    position = 0, 160
+    halign = center
+    valign = center
+}
+
+# AVATAR -- NeuAvatar size="lg" status="online"
+image {
+    monitor =
+    path = {{repo_root}}/theme/wall/neu-avatar.png
+    size = 110
+    rounding = -1
+    border_size = 0
+    position = 0, 60
+    halign = center
+    valign = center
+}
+
+label {
+    monitor =
+    text = {{user_name}}
+    font_size = {{font_l}}
+    font_family = $font
+    color = {{hl_text}}
+    position = 0, -10
+    halign = center
+    valign = center
+}
+
+# PASSWORD -- an inset well: the field is the surface the ground is pressed into,
+# ringed by the brand gradient at --neu-focus-shadow thickness.
+input-field {
+    monitor =
+    size = 340, 52
+    outline_thickness = {{focusRing}}
+    rounding = {{radius_m}}
+
+    inner_color = {{hl_bgComponent}}
+    outer_color = $accent_ramp
+    check_color = {{hl_tertiary}} {{hl_primary}} 120deg
+    fail_color  = {{hl_error}} {{hl_warning}} 40deg
+
+    font_color = {{hl_text}}
+    font_family = $font
+    fade_on_empty = false
+
+    placeholder_text = You know what to do
+    fail_text = Do better
+
+    dots_text_format = $
+    dots_spacing = 0.3
+
+    position = 0, -80
+    halign = center
+    valign = center
+}
+
+label {
+    monitor =
+    text = press enter to unlock
+    font_size = {{font_xs}}
+    font_family = $font
+    color = {{hl_textDim}}
+    position = 0, -130
+    halign = center
+    valign = center
+}

@@ -1,0 +1,94 @@
+/* {{stamp}} */
+/*
+ * The NeuCommandPalette recipe (src/neu/neu-command-palette/neu-command-palette.css)
+ * in GTK3. wofi is no longer the launcher -- Spotlight in the Quickshell shell is --
+ * but it stays installed and styled for --dmenu callers and as the panic-mode
+ * fallback, so it must not look foreign when it appears.
+ *
+ * Shadow grammar: the panel is raised, the search field is an inset well, and the
+ * selected row is inset + accent glow. Same as the web kit.
+ */
+
+* {
+  font-family: "{{family_mono}}", "Noto Color Emoji", monospace;
+  font-size: {{font_xl}}px;
+  border: none;
+  outline: none;
+}
+
+window {
+  background-color: transparent;
+}
+
+/* .neu-command-panel: bg-card, radius-l, shadow-xl */
+#outer-box {
+  background-color: {{bgCard}};
+  border-radius: {{radius_l}}px;
+  padding: {{size_s}}px;
+  box-shadow:
+    {{shadow_xl_offset}}px {{shadow_xl_offset}}px {{shadow_xl_blur}}px {{shadowDark}},
+    -{{shadow_xl_offset}}px -{{shadow_xl_offset}}px {{shadow_xl_blur}}px {{shadowLight}};
+}
+
+/* .neu-command-input: an inset entry field pinned to the top */
+#input {
+  background-color: {{bgComponent}};
+  color: {{text}};
+  caret-color: {{primary}};
+  padding: {{size_m}}px {{size_l}}px;
+  margin: {{size_s}}px;
+  border-radius: {{radius_m}}px;
+  box-shadow:
+    inset {{shadow_s_offset}}px {{shadow_s_offset}}px {{shadow_s_blur}}px {{shadowDark}},
+    inset -{{shadow_s_offset}}px -{{shadow_s_offset}}px {{shadow_s_blur}}px {{shadowLight}};
+}
+
+#input image {
+  color: {{primary}};
+}
+
+#scroll {
+  margin: {{size_xs}}px {{size_s}}px;
+}
+
+#inner-box {
+  background-color: transparent;
+}
+
+#entry {
+  padding: {{size_s}}px {{size_m}}px;
+  margin: {{size_xxs}}px {{size_xs}}px;
+  border-radius: {{radius_s}}px;
+  background-color: transparent;
+}
+
+/* Neumorphism gets its depth from shadow, not from banding rows. The old
+   nth-child(even) zebra stripe is deliberately gone. */
+#entry:hover {
+  background-color: {{hoverHighlight}};
+}
+
+/* .neu-command-option--active: inset well + accent glow + accent text */
+#entry:selected,
+#entry:focus {
+  background-color: {{bgComponent}};
+  box-shadow:
+    inset {{shadow_s_offset}}px {{shadow_s_offset}}px {{shadow_s_blur}}px {{shadowDark}},
+    inset -{{shadow_s_offset}}px -{{shadow_s_offset}}px {{shadow_s_blur}}px {{shadowLight}},
+    0 0 {{size_xs}}px {{accent}};
+}
+
+#text {
+  color: {{text}};
+  padding: 0 {{size_xs}}px;
+}
+
+#entry:selected #text,
+#text:selected {
+  color: {{primary}};
+  background: transparent;
+}
+
+#img {
+  margin-right: {{size_m}}px;
+}

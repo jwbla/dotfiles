@@ -1,0 +1,26 @@
+# {{stamp}}
+# Adopted into the dotfiles repo by the neu theme port; the palette itself is
+# qt6ct/neu.conf, linked to ~/.config/qt6ct/colors/neu.conf. qt6ct needs an
+# absolute path here, which is why this file is generated rather than static.
+[Appearance]
+custom_palette=true
+color_scheme_path={{home}}/.config/qt6ct/colors/neu.conf
+icon_theme=breeze-dark
+standard_dialogs=default
+style=Fusion
+
+[Fonts]
+fixed="{{family_mono}},11,-1,5,50,0,0,0,0,0"
+general="{{family_ui}},10,-1,5,50,0,0,0,0,0"
+
+[Interface]
+double_click_interval=400
+cursor_flash_time=1000
+buttonbox_layout=0
+keyboard_scheme=2
+gui_effects=@Invalid()
+stylesheets=@Invalid()
+toolbutton_style=4
+activate_item_on_single_click=1
+menus_have_icons=true
+show_shortcuts_in_context_menus=true

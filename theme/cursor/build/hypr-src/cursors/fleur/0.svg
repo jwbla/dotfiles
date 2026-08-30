@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"
+     viewBox="0 0 24 24">
+  <defs>
+    <filter id="cast" x="-60%" y="-60%" width="240%" height="240%"
+            color-interpolation-filters="sRGB">
+      <feDropShadow dx="0.9" dy="1.1" stdDeviation="0.9"
+                    flood-color="#000000" flood-opacity="0.75"/>
+    </filter>
+  </defs>
+  <g filter="url(#cast)">
+    <g fill="#8b2fe0" stroke="#8b2fe0" stroke-width="2.6"
+       stroke-linejoin="round" stroke-linecap="round">
+      <path d="M3.80,12.00 L7.80,9.00 L7.80,15.00 Z"/>
+  <path d="M11.70,10.70 L7.20,10.70 L7.20,13.30 L11.70,13.30 Z"/>
+  <path d="M20.20,12.00 L16.20,15.00 L16.20,9.00 Z"/>
+  <path d="M12.30,13.30 L16.80,13.30 L16.80,10.70 L12.30,10.70 Z"/>
+  <path d="M12.00,3.80 L15.00,7.80 L9.00,7.80 Z"/>
+  <path d="M13.30,11.70 L13.30,7.20 L10.70,7.20 L10.70,11.70 Z"/>
+  <path d="M12.00,20.20 L9.00,16.20 L15.00,16.20 Z"/>
+  <path d="M10.70,12.30 L10.70,16.80 L13.30,16.80 L13.30,12.30 Z"/>
+    </g>
+    <g fill="#cccccc">
+      <path d="M3.80,12.00 L7.80,9.00 L7.80,15.00 Z"/>
+  <path d="M11.70,10.70 L7.20,10.70 L7.20,13.30 L11.70,13.30 Z"/>
+  <path d="M20.20,12.00 L16.20,15.00 L16.20,9.00 Z"/>
+  <path d="M12.30,13.30 L16.80,13.30 L16.80,10.70 L12.30,10.70 Z"/>
+  <path d="M12.00,3.80 L15.00,7.80 L9.00,7.80 Z"/>
+  <path d="M13.30,11.70 L13.30,7.20 L10.70,7.20 L10.70,11.70 Z"/>
+  <path d="M12.00,20.20 L9.00,16.20 L15.00,16.20 Z"/>
+  <path d="M10.70,12.30 L10.70,16.80 L13.30,16.80 L13.30,12.30 Z"/>
+    </g>
+  </g>
+</svg>

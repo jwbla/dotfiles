@@ -1,19 +1,23 @@
 import QtQuick
 import QtQuick.Layouts
 import qs
+import qs.ui.neu
 
 // Clickable pill: optional status dot (or spinner in its place), optional
 // nerd-font icon, label. The glance panel's repo, service and dashboard
 // strips are made of these.
-Rectangle {
+//
+// Wears .neu-chip's inset well, so a chip reads as a recessed readout rather
+// than a floating tag; hovering a clickable one raises it.
+NeuSurface {
     id: root
 
     property string label: ""
     property string icon: ""
-    property color iconColor: Theme.lightPrimary
+    property color iconColor: Theme.neuAccentLight
 
     property bool dotVisible: false
-    property color dotColor: Theme.overlay0
+    property color dotColor: Theme.neuTextDim
     // Slow blink for "in progress" states.
     property bool dotPulse: false
     // Replaces the dot while the backing feed is being re-checked.
@@ -29,13 +33,13 @@ Rectangle {
 
     implicitWidth: row.implicitWidth + 20
     implicitHeight: 26
-    radius: 13
-    color: mouse.containsMouse && clickable ? Theme.rowHover : Theme.rowBg
-    opacity: dim ? 0.55 : 1
 
-    Behavior on color {
-        ColorAnimation { duration: 90 }
-    }
+    mode: mouse.containsMouse && clickable ? "raised" : "inset"
+    tier: "s"
+    radius: 13
+    surface: mouse.containsMouse && clickable ? Theme.neuHoverHighlight
+                                              : Theme.neuBgComponent
+    opacity: dim ? 0.55 : 1
 
     onDotPulseChanged: {
         if (!dotPulse)
@@ -72,7 +76,7 @@ Rectangle {
             Spinner {
                 anchors.centerIn: parent
                 visible: root.spinning
-                color: Theme.lightPrimary
+                color: Theme.neuAccentLight
                 font.pixelSize: Theme.fontSizeSmall
             }
         }
@@ -87,7 +91,7 @@ Rectangle {
 
         Text {
             text: root.label
-            color: root.hovered && root.clickable ? Theme.text : Theme.subtext1
+            color: root.hovered && root.clickable ? Theme.neuText : Theme.neuTextMuted
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeSmall
         }

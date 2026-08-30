@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"
+     viewBox="0 0 24 24">
+  <defs>
+    <filter id="cast" x="-60%" y="-60%" width="240%" height="240%"
+            color-interpolation-filters="sRGB">
+      <feDropShadow dx="0.9" dy="1.1" stdDeviation="0.9"
+                    flood-color="#000000" flood-opacity="0.75"/>
+    </filter>
+  </defs>
+  <g filter="url(#cast)">
+    <g fill="#8b2fe0" stroke="#8b2fe0" stroke-width="2.6"
+       stroke-linejoin="round" stroke-linecap="round">
+      
+  <path d="M12,3.2 a8.8,8.8 0 1 1 0,17.6 a8.8,8.8 0 1 1 0,-17.6 Z
+           M12,5.9 a6.1,6.1 0 0 0 -4.6,10.1 L17.5,8.2 A6.1,6.1 0 0 0 12,5.9 Z
+           M12,18.1 a6.1,6.1 0 0 0 4.6,-10.1 L6.5,15.8 A6.1,6.1 0 0 0 12,18.1 Z"
+        fill-rule="evenodd"/>
+
+    </g>
+    <g fill="#cccccc">
+      
+  <path d="M12,3.2 a8.8,8.8 0 1 1 0,17.6 a8.8,8.8 0 1 1 0,-17.6 Z
+           M12,5.9 a6.1,6.1 0 0 0 -4.6,10.1 L17.5,8.2 A6.1,6.1 0 0 0 12,5.9 Z
+           M12,18.1 a6.1,6.1 0 0 0 4.6,-10.1 L6.5,15.8 A6.1,6.1 0 0 0 12,18.1 Z"
+        fill-rule="evenodd"/>
+
+    </g>
+  </g>
+</svg>

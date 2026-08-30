@@ -3,6 +3,18 @@
 Personal dotfiles, installed as symlinks by `install.sh`. No stow or other
 dependencies — plain `ln`.
 
+```sh
+./install.sh              # auto: full on a Linux desktop, minimal on macOS / Coder
+./install.sh --packages   # ... and install any missing packages (pacman or brew)
+./install.sh --minimal    # portable CLI only, no desktop configs
+./install.sh --help
+```
+
+`--full` is Linux-only and is refused elsewhere, so running this on the Mac will
+not scatter `~/.config/hypr` and friends into a home that cannot use them.
+Packages are never installed without `--packages`; otherwise the script just
+reports what is missing.
+
 ## Install
 
 ### Desktop (Arch/Hyprland)
@@ -75,8 +87,12 @@ The zshrc degrades gracefully when tools are missing, but expects:
   television (`tv`), atuin (Ctrl+R / Up history search — see below)
 - **desktop**: hyprland, waybar, wofi, dunst, newsboat, taskwarrior (motd),
   ghostty/kitty/alacritty
-- **quickshell**: `quickshell` (extra/) for the Command Center panel on
-  ``SUPER+` `` — tasks, time tracking and tmux projects; also needs
+- **quickshell**: the whole desktop shell — bar, dock, Spotlight (`SUPER+SPACE`),
+  notifications, Control Center, plus the Command Center panel on ``SUPER+` `` and
+  the rgtv glance on `SUPER+R`. Needs taskwarrior + timewarrior.
+- **theme**: the desktop wears `@rgtv/neu` (see `NEU_THEME.md`). One source of
+  truth in `theme/tokens.json`; `python3 theme/gen.py` regenerates every themed
+  config. **Read `NEU_THEME.md` §5 before a test drive — it is how you back out.**
   timewarrior. Without it that bind does nothing; `SUPER+A` still opens the
   wofi tmux picker.
 - **rgtv glance** (`SUPER+R`, same quickshell instance): the rgtv fleet at a

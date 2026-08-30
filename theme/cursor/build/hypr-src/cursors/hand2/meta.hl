@@ -1,0 +1,15 @@
+resize_algorithm = bilinear
+hotspot_x = 0.4583
+hotspot_y = 0.1250
+define_size = 0, 0.svg
+define_override = hand
+define_override = hand1
+define_override = pointer
+define_override = pointing_hand
+define_override = grab
+define_override = openhand
+define_override = grabbing
+define_override = closedhand
+define_override = dnd-none
+define_override = dnd-move
+define_override = e29285e634086352946a5f7f218b5c1a

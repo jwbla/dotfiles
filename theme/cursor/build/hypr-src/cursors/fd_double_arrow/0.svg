@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"
+     viewBox="0 0 24 24">
+  <defs>
+    <filter id="cast" x="-60%" y="-60%" width="240%" height="240%"
+            color-interpolation-filters="sRGB">
+      <feDropShadow dx="0.9" dy="1.1" stdDeviation="0.9"
+                    flood-color="#000000" flood-opacity="0.75"/>
+    </filter>
+  </defs>
+  <g filter="url(#cast)">
+    <g fill="#8b2fe0" stroke="#8b2fe0" stroke-width="2.6"
+       stroke-linejoin="round" stroke-linecap="round">
+      <path d="M18.08,5.92 L17.37,11.43 L12.57,6.63 Z"/>
+  <path d="M13.34,12.78 L16.45,9.67 L14.33,7.55 L11.22,10.66 Z"/>
+  <path d="M5.92,18.08 L6.63,12.57 L11.43,17.37 Z"/>
+  <path d="M10.66,11.22 L7.55,14.33 L9.67,16.45 L12.78,13.34 Z"/>
+    </g>
+    <g fill="#cccccc">
+      <path d="M18.08,5.92 L17.37,11.43 L12.57,6.63 Z"/>
+  <path d="M13.34,12.78 L16.45,9.67 L14.33,7.55 L11.22,10.66 Z"/>
+  <path d="M5.92,18.08 L6.63,12.57 L11.43,17.37 Z"/>
+  <path d="M10.66,11.22 L7.55,14.33 L9.67,16.45 L12.78,13.34 Z"/>
+    </g>
+  </g>
+</svg>

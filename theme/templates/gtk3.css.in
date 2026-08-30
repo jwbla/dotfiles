@@ -1,0 +1,98 @@
+/* {{stamp}} */
+/*
+ * GTK3 apps on the neu ground. Adwaita-dark still supplies the widget geometry;
+ * this only re-points its named colours and adds the relief where GTK3 will
+ * actually render a box-shadow.
+ */
+
+@define-color theme_bg_color {{bg}};
+@define-color theme_base_color {{bgComponent}};
+@define-color theme_fg_color {{text}};
+@define-color theme_text_color {{text}};
+@define-color theme_selected_bg_color {{primary}};
+@define-color theme_selected_fg_color {{ink_primary}};
+@define-color theme_unfocused_bg_color {{bg}};
+@define-color theme_unfocused_base_color {{bgComponent}};
+@define-color theme_unfocused_fg_color {{textMuted}};
+@define-color theme_unfocused_text_color {{textMuted}};
+@define-color theme_unfocused_selected_bg_color {{accent_darker}};
+@define-color theme_unfocused_selected_fg_color {{text}};
+
+@define-color insensitive_bg_color {{bg}};
+@define-color insensitive_fg_color {{textDim}};
+@define-color insensitive_base_color {{bg}};
+
+@define-color borders {{hairlineOnBg}};
+@define-color unfocused_borders {{hairlineOnBg}};
+
+@define-color warning_color {{warning}};
+@define-color error_color {{error}};
+@define-color success_color {{success}};
+
+@define-color content_view_bg {{bgCard}};
+@define-color text_view_bg {{bgComponent}};
+@define-color wm_bg {{bgComponent}};
+@define-color wm_title {{text}};
+@define-color wm_unfocused_title {{textMuted}};
+
+@define-color accent_color {{primary}};
+@define-color accent_bg_color {{primary}};
+@define-color accent_fg_color {{ink_primary}};
+
+/* Raised = pressable. */
+button {
+  border-radius: {{radius_s}}px;
+  box-shadow:
+    {{shadow_xs_offset}}px {{shadow_xs_offset}}px {{shadow_xs_blur}}px {{shadowDark}},
+    -{{shadow_xs_offset}}px -{{shadow_xs_offset}}px {{shadow_xs_blur}}px {{shadowLight}};
+}
+
+/* Inset = held. */
+button:active,
+button:checked {
+  box-shadow:
+    inset {{shadow_xs_offset}}px {{shadow_xs_offset}}px {{shadow_xs_blur}}px {{shadowDark}},
+    inset -{{shadow_xs_offset}}px -{{shadow_xs_offset}}px {{shadow_xs_blur}}px {{shadowLight}};
+}
+
+/* Flat = inert. */
+button:disabled {
+  box-shadow: none;
+  opacity: 0.5;
+}
+
+entry {
+  border-radius: {{radius_s}}px;
+  box-shadow:
+    inset {{shadow_xs_offset}}px {{shadow_xs_offset}}px {{shadow_xs_blur}}px {{shadowDark}},
+    inset -{{shadow_xs_offset}}px -{{shadow_xs_offset}}px {{shadow_xs_blur}}px {{shadowLight}};
+}
+
+entry:focus {
+  box-shadow:
+    inset {{shadow_xs_offset}}px {{shadow_xs_offset}}px {{shadow_xs_blur}}px {{shadowDark}},
+    inset -{{shadow_xs_offset}}px -{{shadow_xs_offset}}px {{shadow_xs_blur}}px {{shadowLight}},
+    0 0 0 {{focusRing}}px {{accent}};
+}
+
+/* Brand-tinted scrollbars, from --neu-scrollbar-thumb. */
+scrollbar slider {
+  background-color: {{scrollThumb}};
+  border-radius: {{size_xs}}px;
+  min-width: {{size_s}}px;
+  min-height: {{size_s}}px;
+}
+
+scrollbar slider:hover {
+  background-color: {{primary}};
+}
+
+scrollbar {
+  background-color: transparent;
+}
+
+tooltip {
+  background-color: {{bgCard}};
+  color: {{text}};
+  border-radius: {{radius_s}}px;
+}

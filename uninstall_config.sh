@@ -31,6 +31,7 @@ SCAN_DIRS=(
     "$HOME"
     "$HOME/.local/bin"
     "$HOME/.config"
+    "$HOME/.config/atuin"
     "$HOME/.config/hypr"
     "$HOME/.config/waybar"
     "$HOME/.config/quickshell"
@@ -42,6 +43,14 @@ SCAN_DIRS=(
     "$HOME/.config/tms"
     "$HOME/.config/tms/projects"
     "$HOME/.newsboat"
+    # neu theme
+    "$HOME/.config/ghostty/themes"
+    "$HOME/.config/gtk-3.0"
+    "$HOME/.config/gtk-4.0"
+    "$HOME/.config/qt6ct"
+    "$HOME/.config/qt6ct/colors"
+    "$HOME/.icons"
+    "$HOME/.local/share/icons"
 )
 
 remove_repo_links() {
@@ -72,6 +81,7 @@ echo "🧹 Cleaning up empty directories..."
 for dir in \
     "$HOME/.config/tms/projects" \
     "$HOME/.config/tms" \
+    "$HOME/.config/atuin" \
     "$HOME/.config/hypr" \
     "$HOME/.config/waybar" \
     "$HOME/.config/kitty" \
@@ -79,6 +89,9 @@ for dir in \
     "$HOME/.config/wofi" \
     "$HOME/.config/ghostty" \
     "$HOME/.config/dunst" \
+    "$HOME/.config/ghostty/themes" \
+    "$HOME/.config/qt6ct/colors" \
+    "$HOME/.icons" \
     "$HOME/.newsboat"
 do
     if [[ -d "$dir" ]]; then
