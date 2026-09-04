@@ -7,10 +7,23 @@
 # ------------------------------
 # Sync
 # ------------------------------
-# No sync server yet — history is local-only, in ~/.local/share/atuin/history.db.
-# To point at a self-hosted server later:
-#   sync_address = "http://127.0.0.1:8888"
-#   atuin register -u <user> -e <email>   # then: atuin sync
+# The self-hosted server exists now (jwbla-infra ROADMAP.md M5, VMID 114,
+# 192.168.1.114 — live 2026-09-04), but sync_address is deliberately left
+# UNSET here rather than pointed at it directly: zshrc's shell init probes
+# the fleet server (atuin.h.jwbla.com, then the IP, ≤300ms) on every shell
+# start and exports ATUIN_SYNC_ADDRESS, which atuin reads in preference to
+# this file's sync_address. A static value here would be wrong on any
+# machine, or any moment, the fleet server can't be reached — this LAN-only
+# box has no uptime guarantee and there's no VPN (wg, 113) yet for off-LAN
+# access. See ~/dev/dotfiles/zshrc/.zshrc, the block right before
+# `atuin init zsh`.
+#
+# The operator's own account is not created by this file or by the server's
+# installer — that first `atuin register` is a manual, deliberate step (see
+# jwbla-infra/services/atuin/README.md). Until it's done, sync is local-only
+# regardless of which address gets probed:
+#   atuin register -u <user> -e <email> --host http://192.168.1.114:8888
+#   atuin sync
 # NOTE: sync is E2E encrypted with ~/.local/share/atuin/key. That key already
 # exists here — it was generated locally, because [dotfiles] below needs it
 # even with sync off (see the caveat there). It is NOT recoverable from the

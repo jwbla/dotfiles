@@ -210,5 +210,31 @@ command -v starship >/dev/null && eval "$(starship init zsh)"
 command -v zoxide   >/dev/null && eval "$(zoxide init zsh)"
 command -v tv       >/dev/null && eval "$(tv init zsh)"
 # Last: atuin rebinds ^R and Up, so it must load after the Key Bindings block.
-command -v atuin    >/dev/null && eval "$(atuin init zsh)"
+if command -v atuin >/dev/null 2>&1; then
+    # Prefer the self-hosted fleet sync server (jwbla-infra ROADMAP.md M5,
+    # live 2026-09-04 at 192.168.1.114), fall back to local-only. Probed once
+    # per shell: guarded on ATUIN_SYNC_ADDRESS being unset, and exported, so
+    # a tmux pane or subshell spawned from this one inherits the answer
+    # instead of re-probing. Two curl attempts capped at 150ms each -> at
+    # most ~300ms added to shell startup, never an unbounded hang on a
+    # server that's down or a LAN that's slow. Name first
+    # (atuin.h.jwbla.com — not in pihole yet, so this leg is expected to
+    # fail today, but it starts working for free the day the operator pushes
+    # that DNS fragment), IP second, then the unauthenticated local default.
+    # config.toml's sync_address stays commented out on purpose: atuin reads
+    # ATUIN_SYNC_ADDRESS over the file, so a static value there would only
+    # ever be wrong half the time.
+    if [[ -z "$ATUIN_SYNC_ADDRESS" ]] && command -v curl >/dev/null 2>&1; then
+        if curl -fsS --max-time 0.15 --connect-timeout 0.15 \
+            http://atuin.h.jwbla.com:8888/healthz >/dev/null 2>&1; then
+            export ATUIN_SYNC_ADDRESS="http://atuin.h.jwbla.com:8888"
+        elif curl -fsS --max-time 0.15 --connect-timeout 0.15 \
+            http://192.168.1.114:8888/healthz >/dev/null 2>&1; then
+            export ATUIN_SYNC_ADDRESS="http://192.168.1.114:8888"
+        else
+            export ATUIN_SYNC_ADDRESS="http://127.0.0.1:8888"
+        fi
+    fi
+    eval "$(atuin init zsh)"
+fi
 true
