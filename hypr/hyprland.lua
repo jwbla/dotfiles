@@ -312,6 +312,11 @@ hl.bind(mainMod .. " + R",     hl.dsp.exec_cmd("qs -c commandcenter ipc call rgt
 -- Tmux project picker with wofi (also the fallback if quickshell is missing)
 hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("qs -c commandcenter ipc call cc toggle"))
 
+-- The local model, docked on the left edge. Answers from LM Studio (or any
+-- OpenAI-compatible server) named in ~/.config/neu/llm.env -- nothing leaves
+-- the LAN, and its filesystem tools are read-only and root-limited.
+hl.bind(mainMod .. " + I",     hl.dsp.exec_cmd("qs -c commandcenter ipc call llm toggle"))
+
 -- Notification history. Toasts are gone in eight seconds; this is where they
 -- went. SUPER+SHIFT+N is do-not-disturb: it silences the toast, not the record.
 hl.bind(mainMod .. " + N",             hl.dsp.exec_cmd("qs -c commandcenter ipc call notifs toggle"))

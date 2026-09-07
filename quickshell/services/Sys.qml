@@ -38,8 +38,17 @@ Singleton {
         return Math.max(0, Math.min(1, (data.net.signal + 85) / 55));
     }
 
-    readonly property int volumePct: (data.vol && data.vol.pct !== null) ? data.vol.pct : -1
+    // What the desktop should be showing: the level we have asked for while a
+    // change is in flight, and the polled truth the rest of the time. Without
+    // the optimistic half, a scroll only moves the number when the 3s poll
+    // comes back, and the notches in between all compute from the same stale
+    // base -- a flick of the wheel used to move the volume 5% in total.
+    readonly property int volumePct: volWanted >= 0 ? volWanted
+        : ((data.vol && data.vol.pct !== null) ? data.vol.pct : -1)
     readonly property bool muted: !!(data.vol && data.vol.muted)
+
+    property int volWanted: -1   // level we want; -1 once the poll has caught up
+    property int volLast: -1     // level pactl was last told, to spot a no-op
 
     readonly property real cpu: data.cpu || 0
     readonly property real mem: data.mem || 0
@@ -60,14 +69,36 @@ Singleton {
     }
 
     function setVolume(pct) {
-        mutate.command = ["pactl", "set-sink-volume", "@DEFAULT_SINK@",
-                          Math.round(Math.max(0, Math.min(100, pct))) + "%"];
-        mutate.running = true;
+        volWanted = Math.round(Math.max(0, Math.min(100, pct)));
+        flushVolume();
+    }
+
+    /** Relative move, for the wheel. Steps from the level we asked for last. */
+    function nudgeVolume(delta) {
+        setVolume((volumePct >= 0 ? volumePct : 0) + delta);
+    }
+
+    // One pactl per change, and Process refuses a new command while the last
+    // one is still running -- so a burst of scroll events used to land its
+    // first notch and silently drop the rest. Coalesce instead: hold the level
+    // we want, write it when the pipe is free, and write it once more if it
+    // moved while pactl was busy.
+    function flushVolume() {
+        if (vol.running || volWanted < 0 || volWanted === volLast)
+            return;
+        volLast = volWanted;
+        vol.command = ["pactl", "set-sink-volume", "@DEFAULT_SINK@", volWanted + "%"];
+        vol.running = true;
     }
 
     function toggleMute() {
-        mutate.command = ["pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle"];
-        mutate.running = true;
+        mute.command = ["pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle"];
+        mute.running = true;
+    }
+
+    function setMuted(on) {
+        mute.command = ["pactl", "set-sink-mute", "@DEFAULT_SINK@", on ? "1" : "0"];
+        mute.running = true;
     }
 
     Process {
@@ -78,6 +109,13 @@ Singleton {
                 try {
                     root.data = JSON.parse(this.text || "{}");
                     root.ready = true;
+                    // The write landed and this poll has seen it: hand the
+                    // number back to pactl, so a change made anywhere else --
+                    // a media key, pavucontrol -- still shows up here.
+                    if (!vol.running && root.volWanted === root.volLast) {
+                        root.volWanted = -1;
+                        root.volLast = -1;
+                    }
                 } catch (e) {
                     console.warn("Sys: bad neu_sysinfo.sh output:", e);
                 }
@@ -85,8 +123,18 @@ Singleton {
         }
     }
 
+    // Volume and mute keep separate pipes: a wheel flick and a click on the
+    // same module must not cancel one another out.
     Process {
-        id: mutate
+        id: vol
+        onExited: {
+            root.flushVolume();   // no-op unless the level moved while we wrote
+            root.reload();
+        }
+    }
+
+    Process {
+        id: mute
         onExited: root.reload()
     }
 

@@ -8,6 +8,7 @@ import qs.ui.control
 import qs.ui.notify
 import qs.ui.switcher
 import qs.ui.dev
+import qs.ui.llm
 
 ShellRoot {
     // The bar owns the top edge; hyprland.lua no longer starts waybar.
@@ -34,6 +35,12 @@ ShellRoot {
     // SUPER+SPACE, replacing `wofi --show drun`.
     Spotlight {
         id: spotlight
+    }
+
+    // SUPER+I -- the local model, on the left edge. Needs ~/.config/neu/llm.env
+    // pointed at an OpenAI-compatible server before it can answer anything.
+    LlmPanel {
+        id: llm
     }
 
     // The notification daemon. dunst stays configured for panic mode.
@@ -138,6 +145,35 @@ ShellRoot {
 
         function close(): void {
             spotlight.close();
+        }
+    }
+
+    // Hyprland's SUPER+I bind shells out to:
+    //   qs -c commandcenter ipc call llm toggle
+    IpcHandler {
+        target: "llm"
+
+        function toggle(): void {
+            llm.toggle();
+        }
+
+        function open(): void {
+            llm.open();
+        }
+
+        function close(): void {
+            llm.close();
+        }
+
+        // Open with the question already asked:
+        //   qs -c commandcenter ipc call llm ask "why is neu-ntfy restarting?"
+        function ask(prompt: string): void {
+            llm.ask(prompt);
+        }
+
+        // Start a fresh conversation without touching the panel.
+        function reset(): void {
+            Llm.reset();
         }
     }
 

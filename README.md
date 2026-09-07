@@ -104,6 +104,23 @@ The zshrc degrades gracefully when tools are missing, but expects:
   from `tea`'s login, so `tea login add` once for gitea.i.realgamers.tv).
   Re-polls every 30s while open; `qs -c commandcenter ipc call rgtv refresh`
   forces one from a script.
+- **LLM sidebar** (`SUPER+I`, same quickshell instance): a chat panel on the
+  left edge talking to a local OpenAI-compatible server -- LM Studio,
+  `llama-server`, ollama -- named in `~/.config/neu/llm.env` (template:
+  `bin/neu-llm.env.example`). Nothing leaves the LAN. It has read-only tools:
+  list/read files, ripgrep, git state and this machine's own sensors, all
+  confined to the roots in `NEU_LLM_ROOTS` (`~/dev:~/.config` by default) with
+  keys, `*.env` and the rest of the deny list refused inside them. Every call
+  it makes shows in the transcript as it happens and lands in
+  `~/.local/state/neu/llm/tools.log`. There is no write tool. The protocol
+  lives in `bin/neu-llm.py`, which is worth running by hand when something
+  looks wrong:
+
+  ```
+  neu-llm.py --probe                       # is the endpoint there, what is loaded
+  echo 'what changed in this repo?' | neu-llm.py --stdin
+  qs -c commandcenter ipc call llm ask "why is neu-ntfy restarting?"
+  ```
 
 ## atuin
 

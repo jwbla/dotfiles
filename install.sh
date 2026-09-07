@@ -203,7 +203,8 @@ if [[ "$MODE" == "full" ]]; then
     # Desktop utility scripts go on PATH so nothing (hyprland binds, other
     # scripts) needs to know where this repo is cloned.
     echo "🔗 Linking scripts into ~/.local/bin..."
-    for f in "$SCRIPT_DIR"/bin/*.sh; do
+    for f in "$SCRIPT_DIR"/bin/*.sh "$SCRIPT_DIR"/bin/*.py; do
+        [[ -e "$f" ]] || continue
         link "bin/$(basename "$f")" "$HOME/.local/bin/$(basename "$f")"
     done
 
@@ -269,6 +270,18 @@ if [[ "$MODE" == "full" ]]; then
     #   systemctl --user enable --now neu-ntfy.service
     link systemd/neu-ntfy.service \
         "$HOME/.config/systemd/user/neu-ntfy.service"
+
+    # --- neu shell: the LLM sidebar ----------------------------------------
+    # SUPER+I talks to an OpenAI-compatible server (LM Studio, llama-server)
+    # named in ~/.config/neu/llm.env. Nothing is linked for it -- bin/neu-llm.py
+    # goes on PATH with the other scripts above -- but without that file the
+    # panel opens and says so, which is the whole setup step:
+    #   install -d -m 700 ~/.config/neu
+    #   install -m 600 bin/neu-llm.env.example ~/.config/neu/llm.env
+    if [[ ! -f "$HOME/.config/neu/llm.env" ]]; then
+        echo "  ℹ️  LLM sidebar idle until ~/.config/neu/llm.env exists" \
+             "(template: bin/neu-llm.env.example)"
+    fi
 
     systemctl --user daemon-reload 2>/dev/null || true
 
