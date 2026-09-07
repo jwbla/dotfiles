@@ -195,7 +195,10 @@ Singleton {
 
     // ---- persistence ---------------------------------------------------
     //
-    // ~/.local/state/quickshell/by-shell/commandcenter/notifications.json.
+    // $XDG_STATE_HOME/quickshell/by-shell/<shell-id>/notifications.json. The id
+    // is quickshell's own hash of the config path, not the -c name, so locate it
+    // with:  find ~/.local/state/quickshell -name notifications.json
+    //
     // One JSON document rewritten whole rather than an append-only log: the cap
     // trim, per-entry dismissal and clear-all all rewrite anyway, so a log would
     // only add a compaction pass to maintain.
@@ -220,8 +223,13 @@ Singleton {
         onLoaded: {
             try {
                 const doc = JSON.parse(text() || "{}");
+                // Concatenated, not assigned: a notification that arrives in the
+                // millisecond between startup and this callback is already in
+                // `entries`, and overwriting would drop the one notification the
+                // shell was slow enough to nearly miss. In-memory first -- those
+                // are the newer ones.
                 if (Array.isArray(doc.entries))
-                    root.entries = doc.entries.slice(0, root.cap);
+                    root.entries = root.entries.concat(doc.entries).slice(0, root.cap);
                 root.dnd = !!doc.dnd;
             } catch (e) {
                 console.warn("Notifs: unreadable history, starting empty:", e);
