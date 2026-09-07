@@ -1,0 +1,43 @@
+[Unit]
+Description=ntfy subscriber (fleet alerts to desktop notifications)
+Documentation=file://%h/dev/dotfiles/systemd/neu-ntfy.env.example
+After=graphical-session.target
+PartOf=graphical-session.target
+
+# Order behind the shell, not just the session. neu-tray-ready waits for
+# quickshell to claim its bus names; starting before that means the first alerts
+# of the session are handed to a notification daemon that does not exist yet and
+# are lost with nothing but a line in the journal to show for it.
+Wants=neu-tray-ready.service
+After=neu-tray-ready.service
+
+# Never give up. The default rate limit stops a unit permanently after five
+# restarts in ten seconds, which would turn a router reboot into a subscriber
+# that is silently dead for the rest of the session -- exactly the state this
+# whole thing exists to make impossible.
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+
+# Populated by the operator, 0600, never in the repo. The unit refuses to start
+# without it rather than running unconfigured and looking healthy.
+EnvironmentFile=%h/.config/neu/ntfy.env
+
+ExecStart=%h/.local/bin/neu-ntfy-subscribe.sh
+
+Restart=always
+RestartSec=10s
+
+# ~/.local/state/neu-ntfy, created with the right ownership. Holds the id of the
+# last message seen so a reconnect resumes instead of skipping the gap.
+StateDirectory=neu-ntfy
+
+# Kept light on purpose: ProtectSystem=strict and friends remount /run read-only,
+# and connecting to the session bus socket then fails -- a sandbox that breaks
+# the one thing this service does.
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=graphical-session.target
