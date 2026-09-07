@@ -253,7 +253,6 @@ class Theme:
         d = self.t["desktop"]
         v["barHeight"] = str(d["barHeight"])
         v["barHeightPlusGap"] = str(d["barHeight"] + self.t["shadow"]["l"]["gap"])
-        v["dockIconPx"] = str(d["dockIconPx"])
         v["user_name"] = self.t["desktop"]["user"]["name"]
         v["user_initials"] = self.t["desktop"]["user"]["initials"]
         v["wall_w"] = str(self.t["desktop"]["wallpaper"]["width"])
@@ -418,9 +417,6 @@ def emit_theme_qml(T: Theme) -> tuple[str, str]:
     d = t["desktop"]
     a(f'    readonly property int barHeight: {d["barHeight"]}')
     a(f'    readonly property real barBlurAlpha: {d["barBlurAlpha"]}')
-    a(f'    readonly property int dockIconPx: {d["dockIconPx"]}')
-    a(f'    readonly property real dockMagHovered: {d["dockMagnify"]["hovered"]}')
-    a(f'    readonly property real dockMagNeighbour: {d["dockMagnify"]["neighbour"]}')
     a(f'    readonly property int meterSegments: {d["meterSegments"]}')
     a(f'    readonly property string userName: "{d["user"]["name"]}"')
     a(f'    readonly property string userInitials: "{d["user"]["initials"]}"')
@@ -706,6 +702,109 @@ def emit_qt6ct(T: Theme) -> tuple[str, str]:
         f"inactive_colors={active}\n")
 
 
+def _kde_color_groups(T: Theme) -> str:
+    """The [Colors:*] / [WM] block shared by the .colors scheme and kdeglobals."""
+    s = T.surf
+    k = lambda c: ",".join(str(round(v * 255)) for v in c[:3])  # noqa: E731
+
+    common = {
+        "DecorationFocus": T.primary,
+        "DecorationHover": T.primary,
+        "ForegroundNormal": s["text"],
+        "ForegroundInactive": s["textDim"],
+        "ForegroundActive": T.primary,
+        "ForegroundLink": T.tertiary,
+        "ForegroundVisited": T.secondary,
+        "ForegroundNegative": T.status["error"]["text"],
+        "ForegroundNeutral": T.status["warning"]["text"],
+        "ForegroundPositive": T.status["success"]["text"],
+    }
+
+    def group(name, bg, alt, over=None):
+        roles = dict(common, BackgroundNormal=bg, BackgroundAlternate=alt)
+        if over:
+            roles.update(over)
+        body = "\n".join(f"{key}={k(roles[key])}" for key in sorted(roles))
+        return f"[Colors:{name}]\n{body}"
+
+    white = (1.0, 1.0, 1.0, 1.0)
+    # Role mapping matches emit_qt6ct so a KDE app and a plain Qt app agree:
+    # Window is the ground, View/Button the component surface, Alternate the card.
+    blocks = [
+        group("Button", s["bgComponent"], s["hoverHighlight"]),
+        group("Complementary", s["bg"], s["bgCard"]),
+        # KF6 paints headers, sidebars and the places panel from this one.
+        group("Header", s["bgComponent"], s["bgCard"]),
+        # Selected text has to stay legible on the brand violet, which the DS
+        # itself escalates to pure white (see on_accent).
+        group("Selection", T.primary, shade(T.primary, T.t["shadeSteps"]["dark"]),
+              {"ForegroundNormal": white, "ForegroundInactive": white,
+               "ForegroundActive": white, "DecorationFocus": white,
+               "DecorationHover": white}),
+        group("Tooltip", s["bgCard"], s["bgComponent"]),
+        group("View", s["bgComponent"], s["bgCard"]),
+        group("Window", s["bg"], s["bgCard"]),
+        "[WM]\n"
+        f"activeBackground={k(s['bgComponent'])}\n"
+        f"activeBlend={k(s['text'])}\n"
+        f"activeForeground={k(s['text'])}\n"
+        f"inactiveBackground={k(s['bg'])}\n"
+        f"inactiveBlend={k(s['textMuted'])}\n"
+        f"inactiveForeground={k(s['textMuted'])}",
+    ]
+    return "\n\n".join(blocks)
+
+
+def emit_kde_colors(T: Theme) -> tuple[str, str]:
+    """
+    A KDE colour scheme, installed to ~/.local/share/color-schemes/Neu.colors.
+
+    This is the file KDE Frameworks apps actually read. Dolphin and friends do
+    not take their palette from qt6ct at all -- KColorSchemeManager loads a
+    *named* scheme by file, and with nothing selected they land on Breeze Light,
+    which is why the file manager came up bright white on a dark desktop.
+    Measured: inline [Colors:*] groups in kdeglobals alone changed nothing (a
+    deliberately lurid green test palette left dolphin white); adding
+    [UiSettings] ColorScheme was what moved it.
+    """
+    return "kde/Neu.colors", (
+        f"# {STAMP}\n\n"
+        "[General]\n"
+        "ColorScheme=Neu\n"
+        "Name=Neu\n"
+        "shadeSortColumn=true\n\n"
+        "[KDE]\n"
+        "contrast=4\n\n"
+        + _kde_color_groups(T) + "\n")
+
+
+def emit_kdeglobals(T: Theme) -> tuple[str, str]:
+    """
+    ~/.config/kdeglobals -- selects the scheme above for KDE Frameworks apps.
+
+    [UiSettings] ColorScheme is the key that does the work: KColorSchemeManager
+    reads it and loads the matching .colors file. [General] ColorScheme is what
+    older KDE code and plasma-integration look at, and the [Colors:*] groups are
+    repeated inline for anything that reads kdeglobals directly rather than
+    resolving the scheme by name -- cheap, and it keeps the two in step.
+
+    Colours only. The widget style stays qt6ct's business (`style=Fusion` in
+    qt6ct.conf), so one file decides how Qt widgets are drawn and one decides
+    what colour they are.
+    """
+    return "kde/kdeglobals", (
+        f"# {STAMP}\n\n"
+        "[UiSettings]\n"
+        "ColorScheme=Neu\n\n"
+        "[General]\n"
+        "ColorScheme=Neu\n"
+        "Name=Neu\n"
+        "shadeSortColumn=true\n\n"
+        "[Icons]\n"
+        "Theme=breeze-dark\n\n"
+        + _kde_color_groups(T) + "\n")
+
+
 def emit_shell_colors(T: Theme) -> tuple[str, str]:
     """bin/neu-colors.sh -- truecolor escapes for _motd and sysinfo.sh."""
     f, s = T.flat(), T.surf
@@ -741,7 +840,7 @@ TEMPLATED = [
 
 EMITTERS = [emit_theme_qml, emit_hypr_lua, emit_waybar_css, emit_reference_css,
             emit_kitty, emit_ghostty, emit_alacritty, emit_tmux, emit_qt6ct,
-            emit_shell_colors]
+            emit_kde_colors, emit_kdeglobals, emit_shell_colors]
 
 
 def build(T: Theme) -> dict[str, str]:

@@ -47,7 +47,7 @@ local freetube    = "flatpak run io.freetubeapp.FreeTube"
 -- Autostart necessary processes (notification daemons, status bars, etc.)
 hl.on("hyprland.start", function()
     hl.exec_cmd("hyprpaper")
-    -- The neu shell: bar, dock, launcher, notifications and the Command Center
+    -- The neu shell: bar, launcher, notifications and the Command Center
     -- (SUPER+`) / rgtv glance (SUPER+R) panels. Started through neu-shell.sh
     -- rather than `qs -d` directly so that a shell which fails to come up falls
     -- back to waybar instead of leaving the session with no bar at all.
@@ -80,9 +80,10 @@ hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
 -- Refer to https://wiki.hypr.land/Configuring/Basics/Variables/
 hl.config({
     general = {
-        -- Neumorphic shadows need room to fall. --neu-shadow-l reaches 15px
-        -- (5 offset + 10 blur), so that is the outer gap; inner gaps are half,
-        -- since two neighbours each contribute a shadow.
+        -- Originally sized so a --neu-shadow-l (15px: 5 offset + 10 blur) had
+        -- room to fall. Window shadows are off now (see decoration below), but
+        -- the spacing is kept -- with no shadow it is the only thing separating
+        -- two tiled windows.
         gaps_in  = neu.gaps_in,
         gaps_out = neu.gaps_out,
 
@@ -117,38 +118,24 @@ hl.config({
         active_opacity   = 1.0,
         inactive_opacity = 0.97,
 
-        -- Hyprland casts one shadow, so it gets the DARK half of the neumorphic
-        -- pair. The light half only reads against a known surface; over
-        -- wallpaper it would look like a halo.
-        -- Windows get the LIGHT half of the neumorphic pair.
+        -- OFF, after living with it. Neumorphism needs a light edge AND a dark
+        -- edge on a known ground, and Hyprland gives exactly one shadow slot
+        -- over arbitrary wallpaper -- so the single edge never resolved into
+        -- relief the way the CSS pair does in the browser. It read as a grey
+        -- halo instead. Tried and rejected before giving up on it: the dark
+        -- half (vanishes into a near-black ground); the light half (the halo);
+        -- `decoration:glow` (inert -- a magenta glow at range 30 changed not one
+        -- pixel); a gradient shadow (renders vertically, so the right edge came
+        -- out light at the top); and drawing the true pair from the shell on a
+        -- Bottom layer (the layer maps and throws no QML warning, but nothing
+        -- renders).
         --
-        -- Hyprland has exactly one shadow slot, so one half of `--neu-shadow-*`
-        -- has to go. Measuring the DS's own bake picks the winner: in
-        -- ~/dev/.artifacts/ksz/neu-default/atlas/panel.base.png the ground sits at
-        -- luminance 20, the light edge at 38 (+18) and the dark edge at 14 (-6).
-        -- Against a near-black ground the light half does three times the work,
-        -- and the desktop ground is now that same flat neu-bg.
-        --
-        -- Negative offset puts it up and to the left, where the light is
-        -- (`-5px -5px 10px #555` in the CSS pair). Tier `s` rather than `l`: a
-        -- window is far larger than a card, and the halo scales with what it
-        -- surrounds.
-        --
-        -- Identical focused and unfocused on purpose -- the animated brand border
-        -- is the focus differentiator, not the shadow.
-        --
-        -- Rejected, each measured: `decoration:glow` (inert -- a magenta glow at
-        -- range 30 changes not one pixel); a gradient shadow (renders vertically,
-        -- so the right edge came out light at the top); and drawing the true pair
-        -- from the shell on a Bottom layer (the layer maps and throws no QML
-        -- warning, but nothing renders -- not chased further).
+        -- Depth on the desktop is now the gaps and the flat neu-bg ground; the
+        -- animated brand border is what marks focus. Real neumorphic relief
+        -- stays where it works -- inside the shell's own surfaces (NeuSurface),
+        -- which paint both halves against a ground they control.
         shadow = {
-            enabled        = true,
-            range          = neu.shadow_range,
-            render_power   = 2,
-            offset         = { -neu.shadow_offset, -neu.shadow_offset },
-            color          = neu.shadowLight,
-            color_inactive = neu.shadowLight,
+            enabled = false,
         },
 
         blur = {
@@ -287,8 +274,6 @@ hl.bind(mainMod .. " + z",     hl.dsp.exec_cmd("hyprlock"))
 -- Panic exit from the neu shell: back to waybar/wofi/dunst, no files touched.
 -- See NEU_THEME.md. This is the first of the three ways out.
 hl.bind(mainMod .. " + SHIFT + ESCAPE", hl.dsp.exec_cmd("~/.local/bin/neu-panic.sh"))
--- The dock also reveals by pushing the pointer to the bottom edge.
-hl.bind(mainMod .. " + SHIFT + D", hl.dsp.exec_cmd("qs -c commandcenter ipc call dock toggle"))
 
 -- Move focus with mainMod + vim keys
 hl.bind(mainMod .. " + h", hl.dsp.focus({ direction = "left" }))
@@ -326,6 +311,11 @@ hl.bind(mainMod .. " + R",     hl.dsp.exec_cmd("qs -c commandcenter ipc call rgt
 
 -- Tmux project picker with wofi (also the fallback if quickshell is missing)
 hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("qs -c commandcenter ipc call cc toggle"))
+
+-- Notification history. Toasts are gone in eight seconds; this is where they
+-- went. SUPER+SHIFT+N is do-not-disturb: it silences the toast, not the record.
+hl.bind(mainMod .. " + N",             hl.dsp.exec_cmd("qs -c commandcenter ipc call notifs toggle"))
+hl.bind(mainMod .. " + SHIFT + N",     hl.dsp.exec_cmd("qs -c commandcenter ipc call notifs dnd"))
 
 -- Special workspace (scratchpad)
 hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special("magic"))

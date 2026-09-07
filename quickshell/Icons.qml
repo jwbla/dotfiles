@@ -38,6 +38,7 @@ Singleton {
     readonly property string check: "\uf058"
     readonly property string times: "\uf057"
     readonly property string warning: "\uf071"
+    readonly property string fire: "\uf06d"
     readonly property string spinner: "\uf1ce"
     readonly property string refresh: "\uf021"
     readonly property string git: "\uf1d3"

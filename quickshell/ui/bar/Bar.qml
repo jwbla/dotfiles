@@ -53,6 +53,8 @@ PanelWindow {
                 onActivated: root.launcherRequested()
             }
 
+            Shortcuts {}
+
             NowPlaying {}
         }
 
@@ -70,6 +72,9 @@ PanelWindow {
             }
             spacing: Theme.sizeXs
 
+            // Silent until the box is actually struggling.
+            LoadModule {}
+
             TrayModule {}
 
             WeatherModule {}
@@ -81,6 +86,11 @@ PanelWindow {
             BatteryModule {}
 
             BarClock {}
+
+            // The notification history, at the end of the row next to the
+            // control centre -- the two "everything that happened / everything
+            // you can change" panels sit together.
+            NotifModule {}
 
             BarButton {
                 icon: Icons.chevronDown

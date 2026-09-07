@@ -23,11 +23,11 @@ Singleton {
     function launch(app) {
         if (!app || !app.exec)
             return;
-        // Detach: the launched program must outlive the shell that started it.
-        launcher.command = app.terminal
-            ? ["hyprctl", "dispatch", "exec", "ghostty -e " + app.exec]
-            : ["hyprctl", "dispatch", "exec", app.exec];
-        launcher.running = true;
+        // Through Hypr, not a raw `hyprctl dispatch exec` -- this session's
+        // Hyprland parses dispatches as Lua and rejected the plain form, which
+        // is why launching from Spotlight was a coin flip. Hyprland execs it, so
+        // the program outlives the shell that started it.
+        Hypr.exec(app.terminal ? "ghostty -e " + app.exec : app.exec);
     }
 
     Process {
@@ -45,8 +45,6 @@ Singleton {
             }
         }
     }
-
-    Process { id: launcher }
 
     Component.onCompleted: reload()
 }

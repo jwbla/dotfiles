@@ -103,7 +103,7 @@ PanelWindow {
                     label: "lock"
                     onToggled: {
                         root.close();
-                        Hyprland.dispatch("exec hyprlock");
+                        Hypr.exec("hyprlock");
                     }
                 }
             }
@@ -190,9 +190,17 @@ PanelWindow {
                 Text {
                     Layout.fillWidth: true
                     elide: Text.ElideRight
-                    text: Sys.batteryPresent
-                          ? (Sys.batteryPct + "%  " + Sys.batteryStatus.toLowerCase())
-                          : "no battery"
+                    // Two packs get named individually -- the aggregate alone
+                    // would hide one sitting empty behind a full one.
+                    text: {
+                        if (!Sys.batteryPresent) return "no battery";
+                        const state = Sys.batteryStatus.toLowerCase();
+                        if (Sys.batteries.length > 1)
+                            return Sys.batteries
+                                .map(b => b.name.replace("BAT", "B") + " " + b.pct + "%")
+                                .join("  ") + "  " + state;
+                        return Sys.batteryPct + "%  " + state;
+                    }
                     color: Theme.neuTextDim
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontXs

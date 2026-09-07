@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Widgets
 import Quickshell.Hyprland
 import qs
 import qs.services
@@ -42,21 +43,24 @@ PanelWindow {
     // ---- the item pool -------------------------------------------------
 
     readonly property var systemActions: [
-        { group: "System", icon: Icons.power,  name: "Lock screen",   run: () => Hyprland.dispatch("exec hyprlock") },
-        { group: "System", icon: Icons.refresh, name: "Reload Hyprland", run: () => Hyprland.dispatch("reload") },
-        { group: "System", icon: Icons.cog,    name: "Restart the neu shell", run: () => Hyprland.dispatch("exec ~/.local/bin/neu-shell.sh") },
-        { group: "System", icon: Icons.warning, name: "Panic: back to waybar", run: () => Hyprland.dispatch("exec ~/.local/bin/neu-panic.sh") }
+        { group: "System", icon: Icons.power,  name: "Lock screen",   run: () => Hypr.exec("hyprlock") },
+        { group: "System", icon: Icons.refresh, name: "Reload Hyprland", run: () => Hypr.reload() },
+        { group: "System", icon: Icons.cog,    name: "Restart the neu shell", run: () => Hypr.exec("~/.local/bin/neu-shell.sh") },
+        { group: "System", icon: Icons.warning, name: "Panic: back to waybar", run: () => Hypr.exec("~/.local/bin/neu-panic.sh") }
     ]
 
     readonly property var pool: {
         const out = [];
+        // iconName is the .desktop `Icon=` field -- usually a theme name
+        // ("firefox"), occasionally an absolute path. The delegate resolves it;
+        // `icon` stays as the glyph to fall back to.
         for (const a of Apps.apps)
-            out.push({ group: "Applications", icon: Icons.app, name: a.name,
-                       hint: a.comment || "", app: a });
+            out.push({ group: "Applications", icon: Icons.app, iconName: a.icon || "",
+                       name: a.name, hint: a.comment || "", app: a });
         for (const w of Hyprland.workspaces.values)
             out.push({ group: "Workspaces", icon: Icons.workspace,
                        name: "Workspace " + w.name,
-                       run: () => Hyprland.dispatch("workspace " + w.id) });
+                       run: () => Hypr.workspace(w.id) });
         for (const p of Tmux.projects)
             out.push({ group: "tmux", icon: Icons.terminal, name: p.name,
                        hint: p.running ? "running" : "",
@@ -200,6 +204,8 @@ PanelWindow {
                 onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
 
                 delegate: Item {
+                    id: row
+
                     required property var modelData
                     required property int index
 
@@ -210,16 +216,29 @@ PanelWindow {
                     readonly property bool newGroup: index === 0
                         || root.results[index - 1].group !== modelData.group
 
+                    // Applications show their own artwork; workspaces, tmux and
+                    // the system actions have no .desktop file and keep glyphs.
+                    // A bare name has to go through the icon provider -- handing
+                    // it to IconImage raw resolves it against the QML module and
+                    // fails. `true` asks for the lookup check, so an Icon= naming
+                    // something not installed yields "" and the glyph stands in.
+                    readonly property string artwork: {
+                        const n = modelData.iconName || "";
+                        if (n === "") return "";
+                        return n.startsWith("/") ? "file://" + n
+                                                 : Quickshell.iconPath(n, true);
+                    }
+
                     // .neu-command-option--active: inset + accent glow + accent text
                     NeuSurface {
                         anchors.fill: parent
                         anchors.margins: 2
-                        visible: parent.active || hover.hovered
-                        mode: parent.active ? "inset" : "flat"
+                        visible: row.active || hover.hovered
+                        mode: row.active ? "inset" : "flat"
                         tier: "s"
                         radius: Theme.radiusS
-                        surface: parent.active ? Theme.neuBgComponent : Theme.neuHoverHighlight
-                        glow: parent.active ? Theme.neuAccent : "transparent"
+                        surface: row.active ? Theme.neuBgComponent : Theme.neuHoverHighlight
+                        glow: row.active ? Theme.neuAccent : "transparent"
                         glowBlur: Theme.sizeXs
                     }
 
@@ -229,26 +248,50 @@ PanelWindow {
                         anchors.rightMargin: Theme.sizeM
                         spacing: Theme.sizeM
 
-                        Text {
-                            text: modelData.icon
-                            color: parent.parent.active ? Theme.neuAccentText : Theme.neuTextDim
-                            font.family: Theme.fontFamily
-                            font.pixelSize: Theme.fontL
+                        // Fixed slot so glyph rows and artwork rows keep the
+                        // same text baseline down the list.
+                        Item {
+                            Layout.preferredWidth: 22
+                            Layout.preferredHeight: 22
+                            Layout.alignment: Qt.AlignVCenter
+
+                            IconImage {
+                                anchors.centerIn: parent
+                                // implicitSize, not anchors.fill: IconImage
+                                // rasterises at its implicit size, and left to
+                                // guess it asks the SVG renderer for a buffer so
+                                // large that Qt refuses and logs for every icon.
+                                implicitSize: 22
+                                visible: row.artwork !== ""
+                                source: row.artwork
+                                // Dim with the row, but never tint -- app
+                                // artwork is somebody else's brand.
+                                opacity: row.active ? 1 : 0.85
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                visible: row.artwork === ""
+                                text: row.modelData.icon
+                                color: row.active ? Theme.neuAccentText : Theme.neuTextDim
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontL
+                            }
                         }
 
                         Text {
                             Layout.fillWidth: true
-                            text: modelData.name
+                            text: row.modelData.name
                             elide: Text.ElideRight
-                            color: parent.parent.active ? Theme.neuAccentText : Theme.neuText
+                            color: row.active ? Theme.neuAccentText : Theme.neuText
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontM
                         }
 
                         // .neu-command-group -- uppercase, 0.06em, dim
                         Text {
-                            text: modelData.group.toUpperCase()
-                            visible: parent.parent.newGroup
+                            text: row.modelData.group.toUpperCase()
+                            visible: row.newGroup
                             color: Theme.neuTextDim
                             font.family: Theme.fontFamily
                             font.pixelSize: Theme.fontXs

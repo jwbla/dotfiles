@@ -17,6 +17,11 @@ Singleton {
     property var data: ({})
     property bool ready: false
 
+    // Every pack sysfs exposes: [{ name, pct, status }]. The bar draws one icon
+    // each; `battery*` below is the aggregate across all of them, weighted by
+    // capacity where sysfs reports energy/charge units.
+    readonly property var batteries: (data.bats || [])
+
     readonly property int batteryPct: (data.bat && data.bat.pct !== null) ? data.bat.pct : -1
     readonly property string batteryStatus: (data.bat && data.bat.status) || "unknown"
     readonly property bool onAc: !!(data.bat && data.bat.ac)
@@ -39,6 +44,15 @@ Singleton {
     readonly property real cpu: data.cpu || 0
     readonly property real mem: data.mem || 0
     readonly property real disk: data.disk || 0
+
+    // Load average over the 1-minute window, divided by core count: 1.0 means
+    // every core has a runnable process queued behind the one it is running.
+    // cpu% cannot say this -- it pins at 1.0 and stops distinguishing "busy"
+    // from "buried", which is the distinction that matters when CI is building
+    // on this box and the desktop starts feeling wrong.
+    readonly property real loadNorm: (data.load && data.load.norm) || 0
+    readonly property real loadAvg1: (data.load && data.load.avg1) || 0
+    readonly property int cores: (data.load && data.load.cores) || 1
 
     function reload() {
         if (!proc.running)

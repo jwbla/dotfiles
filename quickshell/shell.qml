@@ -5,7 +5,6 @@ import qs.ui
 import qs.ui.bar
 import qs.ui.launcher
 import qs.ui.control
-import qs.ui.dock
 import qs.ui.notify
 import qs.ui.switcher
 import qs.ui.dev
@@ -25,11 +24,6 @@ ShellRoot {
     // SUPER+` — local dev state; complements the rgtv fleet glance on SUPER+R.
     DevHub {
         id: devhub
-    }
-
-    // Auto-hiding NeuDock; reveal by pushing the pointer to the bottom edge.
-    Dock {
-        id: dock
     }
 
     // SUPER+TAB — alt-tab, replacing workspace_switcher.sh.
@@ -128,14 +122,6 @@ ShellRoot {
 
         function close(): void {
             control.close();
-        }
-    }
-
-    IpcHandler {
-        target: "dock"
-
-        function toggle(): void {
-            dock.toggle();
         }
     }
 

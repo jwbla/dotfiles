@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import qs
+import qs.services
 import qs.ui.neu
 
 // The centre module. Active workspace = an inset well with an accent rail,
@@ -78,7 +79,7 @@ Row {
             HoverHandler { id: hover }
 
             TapHandler {
-                onTapped: Hyprland.dispatch("workspace " + ws.modelData.id)
+                onTapped: Hypr.workspace(ws.modelData.id)
             }
         }
     }

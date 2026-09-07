@@ -100,7 +100,7 @@ PKGS_CLI_BREW=(zsh tmux starship atuin jq fzf eza zoxide neovim git)
 # either will not start or renders wrong.
 #   qt6-5compat    Qt5Compat.GraphicalEffects -> NeuSurface's inset shadows
 #   qt6-declarative QtQuick.Effects.RectangularShadow -> the raised pair
-#   ttf-ubuntu-mono-nerd  every icon in the bar, dock, spotlight and prompt
+#   ttf-ubuntu-mono-nerd  every icon in the bar, spotlight and prompt
 #   librsvg/ffmpeg  theme/gen.py rasterises the wallpaper and the cursor
 #   libpulse/iw     bin/neu_sysinfo.sh reads volume and wifi through these
 PKGS_DESKTOP_ARCH=(
@@ -242,6 +242,35 @@ if [[ "$MODE" == "full" ]]; then
     link gtk4/gtk.css      "$HOME/.config/gtk-4.0/gtk.css"
     link qt6ct/qt6ct.conf  "$HOME/.config/qt6ct/qt6ct.conf"
     link qt6ct/neu.conf    "$HOME/.config/qt6ct/colors/neu.conf"
+    # KDE Frameworks apps (dolphin, ark, okular) take no palette from qt6ct at
+    # all: KColorSchemeManager loads a NAMED scheme file, and with none selected
+    # they land on Breeze Light -- which is why the file manager came up bright
+    # white on a dark desktop. Neu.colors is the scheme; kdeglobals selects it.
+    link kde/Neu.colors    "$HOME/.local/share/color-schemes/Neu.colors"
+    link kde/kdeglobals    "$HOME/.config/kdeglobals"
+
+    # --- neu shell: tray ordering ------------------------------------------
+    # systemd fires xdg-desktop-autostart.target as soon as the graphical
+    # session is up -- a second or two before quickshell claims the
+    # StatusNotifierWatcher name. An autostart app that offers its tray icon
+    # only once (Enpass) loses that race and shows nothing all session. The
+    # drop-in holds the target until the watcher answers.
+    echo "🔔 Ordering XDG autostart after the tray watcher..."
+    link systemd/neu-tray-ready.service \
+        "$HOME/.config/systemd/user/neu-tray-ready.service"
+    link systemd/xdg-desktop-autostart.target.d/after-neu-tray.conf \
+        "$HOME/.config/systemd/user/xdg-desktop-autostart.target.d/after-neu-tray.conf"
+
+    # --- neu shell: fleet alerts -------------------------------------------
+    # ntfy -> desktop notifications -> the notification history center. Linked
+    # but deliberately NOT enabled: it needs ~/.config/neu/ntfy.env (0600, from
+    # systemd/neu-ntfy.env.example) before it can do anything, so enabling it
+    # here would only produce a unit that restarts forever.
+    #   systemctl --user enable --now neu-ntfy.service
+    link systemd/neu-ntfy.service \
+        "$HOME/.config/systemd/user/neu-ntfy.service"
+
+    systemctl --user daemon-reload 2>/dev/null || true
 
     # Cursor. Two themes, both called `neu`, in separate roots on purpose:
     # they must not share a cursors/ directory or Xcursor would try to parse

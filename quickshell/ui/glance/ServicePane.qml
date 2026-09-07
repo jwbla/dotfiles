@@ -47,7 +47,6 @@ Section {
         "caddy": "\uf0ec",
         "authentik": "\uf084",
         "kz-gameserver": "\uf11b",
-        "rgagent": "\uf26c",
         "rgtv-com": "\uf0ac"
     })
 

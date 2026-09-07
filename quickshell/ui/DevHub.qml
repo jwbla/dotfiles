@@ -140,7 +140,7 @@ PanelWindow {
                         anchors.rightMargin: Theme.sizeM
                         spacing: Theme.sizeM
 
-                        // running dot, same language as the dock
+                        // running dot, same language as the bar's shortcut row
                         Rectangle {
                             Layout.preferredWidth: Theme.sizeS
                             Layout.preferredHeight: Theme.sizeS

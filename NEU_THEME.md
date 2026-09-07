@@ -63,7 +63,7 @@ The generator ports three things from the design system rather than approximatin
 |---|---|---|
 | OKLCh shade ramps | `src/shade.ts` | sRGB washes a hue toward grey as it lightens; OKLCh keeps it vivid. The computed `light` step reproduces the DS's hand-picked `--ctp-light-primary: #9b58e7` exactly. |
 | `onAccent()` contrast | `src/themes.ts` | Picks ink per brand face. Reproduces the DS's own escalation: `#8b2fe0` gets pure white, because the themed `#cdd6f4` only reaches 4.06:1. |
-| Shadow *reach* (`--neu-shadow-*-gap`) | `src/theme/variables.css` | Layout gaps are sized so neighbours' shadows meet instead of piling up. It is why Hyprland's `gaps_out` is 15. |
+| Shadow *reach* (`--neu-shadow-*-gap`) | `src/theme/variables.css` | Layout gaps are sized so neighbours' shadows meet instead of piling up. It is why Hyprland's `gaps_out` is 15 — kept even though window shadows are now off (see §4), because with no shadow the gap is the only thing separating two tiled windows. |
 
 **Nerd-font glyphs are generated too** (`quickshell/Icons.qml`), from hex codepoints in
 `tokens.json`. Literal private-use characters get silently dropped between an editor and the
@@ -78,6 +78,7 @@ disk — it had already happened in this repo once, leaving `[custom.timew] symb
 
 `quickshell/Theme.qml` · `quickshell/Icons.qml` · `hypr/neu.lua` · `hypr/hyprlock.conf` ·
 `waybar/neu.css` · `wofi/style.css` · `dunst/dunstrc` · `ghostty/themes/neu` · `kitty/neu.conf` ·
+`kde/Neu.colors` · `kde/kdeglobals` ·
 `alacritty/neu.toml` · `tmux_conf/neu.conf` · `starship/starship.toml` · `gtk/gtk.css` ·
 `gtk4/gtk.css` · `qt6ct/qt6ct.conf` · `qt6ct/neu.conf` · `theme/neu.css` · `theme/wall/*`
 
@@ -89,7 +90,9 @@ longer running** — they stay installed and restyled, and panic mode brings the
 | Surface | File | Bound to |
 |---|---|---|
 | Bar | `ui/bar/` | always on, top |
-| Dock | `ui/dock/Dock.qml` | pointer to the bottom edge, or `ipc call dock toggle` |
+| Shortcuts | `ui/bar/Shortcuts.qml` | in the bar; launch-or-focus for `DockConfig.pinned` |
+| Load warning | `ui/bar/LoadModule.qml` | in the bar; appears above 1.0 load per core |
+| Tray | `ui/bar/TrayModule.qml` | in the bar; quickshell is the StatusNotifier host (see §4) |
 | Spotlight | `ui/launcher/Spotlight.qml` | `SUPER+SPACE` (was `wofi --show drun`) |
 | Notifications | `ui/notify/` | the D-Bus daemon (was dunst) |
 | Control Center | `ui/control/` | the bar's right-hand chevron |
@@ -97,7 +100,10 @@ longer running** — they stay installed and restyled, and panic mode brings the
 
 Primitives live in `ui/neu/` — `NeuSurface` is the whole grammar in one component
 (`mode: raised | inset | flat`, `tier: xxs…xl`, and `reach`). `Neu.qml` carries the runtime
-colour maths; `DockConfig.qml` is the hand-edited dock contents.
+colour maths; `DockConfig.qml` is the hand-edited pin list behind the bar's Shortcuts row (it also
+fed an auto-hiding bottom dock, since removed). `services/Hypr.qml` is the only thing allowed to
+talk to Hyprland's dispatcher, and `Windows.activate()` is the one launch-or-focus decision every
+surface calls.
 
 ### Modified
 
@@ -128,7 +134,9 @@ in `~/.local/bin`.
 - `starship.toml`'s timew segment had an empty symbol — a glyph lost in an earlier edit.
   Restored by codepoint.
 - The waybar config declared `battery#bat0` **and** `battery#bat1`, but this machine only has
-  `BAT1` in sysfs, so one module has been dead. The bar now shows whatever exists.
+  `BAT1` in sysfs, so one module has been dead. The bar now draws one icon per battery that
+  actually exists — one here, two on the dual-battery laptop — from a single `bats` array in
+  `neu_sysinfo.sh`.
 
 ---
 
@@ -144,6 +152,74 @@ in `~/.local/bin`.
 | `Quickshell.Services.UPower` | Reports **zero devices** despite `upowerd` being active. Battery comes from `/sys/class/power_supply`. |
 | `DesktopEntries` | Reports **zero applications** despite a correct `XDG_DATA_DIRS` and 94 `.desktop` files. Spotlight parses them with `bin/neu_apps.sh`. |
 
+**`hyprctl dispatch` speaks Lua here.** The session starts from `hyprland.lua`, and that is not
+only a config-file choice: `hyprctl dispatch <thing>` gets wrapped as `hl.dispatch(<thing>)` and
+evaluated as Lua, so the classic keyword syntax is a *syntax error at the socket* —
+
+```
+$ hyprctl dispatch exec ghostty
+error: [string "return hl.dispatch(exec ghostty)"]:1: ')' expected near 'ghostty'
+```
+
+Quickshell's `Hyprland.dispatch()` uses the same socket, so this had silently broken **every**
+launch and focus path in the shell: the bar shortcuts, Spotlight, `Apps.launch`, and the alt-tab
+switcher's
+`focuswindow`. No QML error, no log line — the compositor just answered `error:` into a void.
+`services/Hypr.qml` is now the only place that composes a dispatch, and it emits the `hl.dsp.*`
+expressions that hyprland.lua itself binds keys to: `hl.dsp.exec_cmd('…')`,
+`hl.dsp.focus({ window = 'address:0x…' })`, `hl.dsp.focus({ workspace = 3 })`. `hyprctl reload` is
+its own verb rather than a dispatch. Use `hyprctl repl` to inspect the `hl.dsp` table.
+
+**KDE apps take no palette from qt6ct.** Dolphin came up bright white on the dark desktop. It is
+not a qt6ct failure — qt6ct's own window is correctly dark — it is that KDE Frameworks apps build
+their colours with `KColorSchemeManager`, which loads a **named scheme file** and, finding nothing
+selected, falls back to Breeze Light. Measured, in order: inline `[Colors:*]` groups in
+`kdeglobals` alone changed nothing (a deliberately lurid green test palette left dolphin white);
+`[General] ColorScheme=BreezeDark` changed nothing; unsetting `QT_QPA_PLATFORMTHEME` changed the
+style but not the palette; **`[UiSettings] ColorScheme`** was the key that moved it. So the
+generator emits `kde/Neu.colors` (the scheme) and `kde/kdeglobals` (which selects it by name).
+Colours only — the widget *style* stays qt6ct's `style=Fusion`, so one file decides how Qt widgets
+are drawn and one decides what colour they are.
+
+**Hyprland window shadows are off**, deliberately. Neumorphic relief needs a light edge *and* a
+dark edge against a ground you control; Hyprland offers one shadow slot over arbitrary wallpaper,
+so the single edge never resolved into depth the way the CSS pair does in the browser — it read as
+a grey halo. Both halves were tried, plus `decoration:glow` (inert), a gradient shadow (renders
+vertically, so the right edge came out light at the top), and drawing the true pair from the shell
+on a Bottom layer (maps without a warning, renders nothing). Real relief lives inside the shell's
+own surfaces (`NeuSurface`), which paint both halves on a known ground. Depth on the desktop is
+the gaps and the flat ground; **the animated brand border is what marks focus.**
+
+**The tray loses a race at login.** `ui/bar/TrayModule.qml` is a working StatusNotifier host --
+quickshell claims `org.kde.StatusNotifierWatcher` itself -- but the bar came up with an empty tray
+while Enpass ran perfectly well behind it. systemd fires `xdg-desktop-autostart.target` as soon as
+the graphical session is up; on this box that put Enpass at 13:32:23 and quickshell at 13:32:25.
+A tray client is *supposed* to notice a watcher appearing later and re-register; plenty ask once at
+startup and never again, so the icon is simply lost for the session. Restarting the app afterwards
+populates the tray instantly, which is how the two seconds were found.
+
+`systemd/xdg-desktop-autostart.target.d/after-neu-tray.conf` orders that target after
+`neu-tray-ready.service`, which polls the bus for the watcher via `bin/neu-tray-ready.sh`. Bounded
+at 20s and always exits 0 -- if the shell never comes up, neu-shell.sh falls back to waybar (its own
+watcher) and the autostarts have to happen anyway. Fixes every autostart tray client, not just the
+one that exposed it. Check with:
+
+```sh
+busctl --user get-property org.kde.StatusNotifierWatcher \
+    /StatusNotifierWatcher org.kde.StatusNotifierWatcher RegisteredStatusNotifierItems
+```
+
+**A shell cannot set a global busy cursor.** Worth knowing before anyone tries to build an
+X11-style launch throbber: on Wayland the pointer shape belongs to whichever surface the pointer is
+*over*, and each client sets its own -- there is no compositor-wide override to ask for. Measured:
+`hyprctl setcursor` does swap the theme for surfaces the compositor draws (three themes over the
+wallpaper gave three different captures), but over a client that uploads its own cursor buffer it
+changed nothing -- ghostty's I-beam came back byte-identical across all three. A "global" throbber
+built that way would blink in and out depending on which window you happened to be over, and would
+redefine what the plain arrow *means* theme-wide, so a text field would spin where it should show
+an I-beam. A launch-queue-plus-spinners version was built and then reverted as the wrong shape for
+the problem; there is currently **no** launch feedback in the shell.
+
 **Layer blur does not work.** The NeuOS menu bar is translucent over a backdrop blur.
 `hyprland.lua` sets `hl.layer_rule{ blur = true }` for the `neu:*` and `quickshell:*` namespaces,
 using the spelling from `/usr/share/hypr/hyprland.lua` — and Hyprland 0.56.2 ignores it. Verified
@@ -156,9 +232,8 @@ same reason. The rules are left in place, commented, in case a later Hyprland ho
 **UbuntuMono Nerd Font** because it carries the glyphs. `pacman -S ttf-roboto` then swap
 `type.font.ui` in `tokens.json` to match the DS exactly.
 
-**The dock reveals on real pointer movement.** `hyprctl dispatch movecursor` does not generate
-the pointer-enter event a layer surface needs, so it cannot be tested that way — use
-`qs -c commandcenter ipc call dock toggle`, or just move the mouse to the bottom edge.
+**`hyprctl dispatch movecursor` does not generate pointer-enter events** for a layer surface, so
+a hover-driven surface cannot be tested that way — drive it over IPC, or move the mouse for real.
 
 ---
 
@@ -186,7 +261,7 @@ qs -c commandcenter              # run in a terminal; QML errors print to stdout
 On a fresh machine add `--packages` to install what is missing. The list is in
 `install.sh`; the ones that are not obvious are `qt6-5compat` (NeuSurface's inset
 shadows), `qt6-declarative` (`RectangularShadow`, the raised pair) and
-`ttf-ubuntu-mono-nerd` — without that font every icon in the bar, dock, Spotlight
+`ttf-ubuntu-mono-nerd` — without that font every icon in the bar, Spotlight
 and prompt renders as a blank box.
 
 `install.sh --full` also regenerates the theme when the tree does not match this

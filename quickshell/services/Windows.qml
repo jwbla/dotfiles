@@ -16,7 +16,7 @@ Singleton {
 
     property var windows: []
 
-    /** Icon for a window class, borrowing the dock's mapping. */
+    /** Icon for a window class, borrowing the pinned-app mapping. */
     function iconFor(cls) {
         const c = (cls || "").toLowerCase();
         for (const p of DockConfig.pinned)
@@ -36,8 +36,33 @@ Singleton {
     }
 
     function focus(addr) {
-        focusProc.command = ["hyprctl", "dispatch", "focuswindow", "address:" + addr];
-        focusProc.running = true;
+        Hypr.focusWindow(addr);
+    }
+
+    /** Is anything of this window class open? */
+    function isRunning(wmClass) {
+        const c = (wmClass || "").toLowerCase();
+        return c !== "" && windows.some(w => (w.class || "").toLowerCase() === c);
+    }
+
+    /**
+     * What a shortcut tap should do: raise the app if it is already
+     * open, start it if it is not.
+     *
+     * `windows` is focus-ordered, so [0] is whatever holds focus right now.
+     * Tapping the shortcut for the app you are *already in* therefore advances
+     * to its next window rather than doing nothing -- which is the whole point
+     * of a taskbar shortcut once you have three terminals open.
+     */
+    function activate(wmClass, exec) {
+        const c = (wmClass || "").toLowerCase();
+        const open = windows.filter(w => (w.class || "").toLowerCase() === c);
+        if (open.length === 0) {
+            if (exec) Hypr.exec(exec);
+            return;
+        }
+        const alreadyThere = windows.length > 0 && windows[0].address === open[0].address;
+        focus(open[alreadyThere && open.length > 1 ? 1 : 0].address);
     }
 
     Process {
@@ -55,8 +80,6 @@ Singleton {
             }
         }
     }
-
-    Process { id: focusProc }
 
     // Kept warm rather than fetched on demand: `hyprctl clients -j` is a
     // round-trip, and the switcher needs the list the instant SUPER+TAB lands --

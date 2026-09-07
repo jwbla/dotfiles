@@ -51,6 +51,9 @@ SCAN_DIRS=(
     "$HOME/.config/qt6ct/colors"
     "$HOME/.icons"
     "$HOME/.local/share/icons"
+    "$HOME/.local/share/color-schemes"
+    "$HOME/.config/systemd/user"
+    "$HOME/.config/systemd/user/xdg-desktop-autostart.target.d"
 )
 
 remove_repo_links() {

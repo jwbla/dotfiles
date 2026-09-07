@@ -87,7 +87,7 @@ The zshrc degrades gracefully when tools are missing, but expects:
   television (`tv`), atuin (Ctrl+R / Up history search — see below)
 - **desktop**: hyprland, waybar, wofi, dunst, newsboat, taskwarrior (motd),
   ghostty/kitty/alacritty
-- **quickshell**: the whole desktop shell — bar, dock, Spotlight (`SUPER+SPACE`),
+- **quickshell**: the whole desktop shell — bar, Spotlight (`SUPER+SPACE`),
   notifications, Control Center, plus the Command Center panel on ``SUPER+` `` and
   the rgtv glance on `SUPER+R`. Needs taskwarrior + timewarrior.
 - **theme**: the desktop wears `@rgtv/neu` (see `NEU_THEME.md`). One source of

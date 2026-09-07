@@ -155,9 +155,6 @@ Singleton {
     // ---- desktop --------------------------------------------------
     readonly property int barHeight: 42
     readonly property real barBlurAlpha: 0.97
-    readonly property int dockIconPx: 40
-    readonly property real dockMagHovered: 1.4
-    readonly property real dockMagNeighbour: 1.2
     readonly property int meterSegments: 12
     readonly property string userName: "jwbla"
     readonly property string userInitials: "JW"

@@ -1,0 +1,9 @@
+[Unit]
+Description=Wait for a StatusNotifier tray host
+Documentation=file://%h/dev/dotfiles/NEU_THEME.md
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=%h/.local/bin/neu-tray-ready.sh

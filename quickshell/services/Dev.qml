@@ -29,7 +29,7 @@ Singleton {
     function open(repo) {
         // Attach or create a tmux session named after the repo, in a terminal.
         const cmd = "ghostty -e tmux new-session -A -s " + repo.name + " -c " + repo.path;
-        openProc.command = ["hyprctl", "dispatch", "exec", cmd];
+        Hypr.exec(cmd);
         openProc.running = true;
     }
 
@@ -52,8 +52,6 @@ Singleton {
             }
         }
     }
-
-    Process { id: openProc }
 
     Timer {
         interval: 30000
