@@ -141,7 +141,7 @@ Singleton {
     readonly property int baseMs: 200
     readonly property int defaultMs: 300
     readonly property int slowMs: 500
-    readonly property int rainbowMs: 20000
+    readonly property int rainbowMs: 6000
     readonly property int spinnerMs: 800
     readonly property int shimmerMs: 1800
     readonly property int toastInMs: 350

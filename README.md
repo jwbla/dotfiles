@@ -88,7 +88,7 @@ The zshrc degrades gracefully when tools are missing, but expects:
 - **desktop**: hyprland, waybar, wofi, dunst, newsboat, taskwarrior (motd),
   ghostty/kitty/alacritty
 - **quickshell**: the whole desktop shell — bar, Spotlight (`SUPER+SPACE`),
-  notifications, Control Center, plus the Command Center panel on ``SUPER+` `` and
+  notifications, Control Center, plus the Command Center panel on `SUPER+A` and
   the rgtv glance on `SUPER+R`. Needs taskwarrior + timewarrior.
 - **theme**: the desktop wears `@rgtv/neu` (see `NEU_THEME.md`). One source of
   truth in `theme/tokens.json`; `python3 theme/gen.py` regenerates every themed
@@ -107,16 +107,32 @@ The zshrc degrades gracefully when tools are missing, but expects:
 - **LLM sidebar** (`SUPER+I`, same quickshell instance): a chat panel on the
   left edge talking to a local OpenAI-compatible server -- LM Studio,
   `llama-server`, ollama -- named in `~/.config/neu/llm.env` (template:
-  `bin/neu-llm.env.example`). Nothing leaves the LAN. It has read-only tools:
-  list/read files, ripgrep, git state and this machine's own sensors, all
-  confined to the roots in `NEU_LLM_ROOTS` (`~/dev:~/.config` by default) with
-  keys, `*.env` and the rest of the deny list refused inside them. Every call
-  it makes shows in the transcript as it happens and lands in
-  `~/.local/state/neu/llm/tools.log`. There is no write tool. The protocol
-  lives in `bin/neu-llm.py`, which is worth running by hand when something
-  looks wrong:
+  `bin/neu-llm.env.example`). Nothing leaves the LAN. The panel picks the model
+  from a menu in its header, which also picks the **harness** answering behind
+  it -- `bin/neu-llm-harness.sh --detect` lists what is installed:
+
+  | harness | tools | notes |
+  |---|---|---|
+  | `builtin` (default) | read-only, plus a sandboxed `write_file` | `bin/neu-llm.py`. ~200-token system prompt, so it works in a 4k context |
+  | `pi` | read / write / edit / **bash** | `npm i -g @earendil-works/pi-coding-agent`; its confirm dialogs become the panel's approval cards |
+  | `opencode` | full agent, MCP servers | `pacman -S opencode`; its permission API drives the same cards |
+
+  A harness with a real system prompt needs ~10k tokens before you type a word,
+  so **load the model with a large context** or only the builtin will run --
+  LM Studio defaults to 4096 and fails with `n_keep >= n_ctx`.
+
+  The builtin's rails: reads are confined to `NEU_LLM_ROOTS`
+  (`~/dev:~/.config`) with keys, `*.env` and the rest of the deny list refused
+  inside them; writes land unasked only under `~/dev/llm-scratch`, and anywhere
+  else raises an approval card with a diff that blocks the turn until you
+  answer (`ipc call llm approve` / `deny` does it from a script or keybind).
+  Silence for 180s counts as no. Every call, and every verdict, lands in
+  `~/.local/state/neu/llm/tools.log`.
+
+  All three speak one NDJSON protocol, so each is worth running by hand:
 
   ```
+  neu-llm-harness.sh --detect              # which harnesses exist here
   neu-llm.py --probe                       # is the endpoint there, what is loaded
   echo 'what changed in this repo?' | neu-llm.py --stdin
   qs -c commandcenter ipc call llm ask "why is neu-ntfy restarting?"

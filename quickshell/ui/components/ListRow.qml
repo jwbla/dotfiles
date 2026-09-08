@@ -31,6 +31,10 @@ Item {
         tier: root.highlight ? "s" : "xxs"
         radius: Theme.radiusS
         surface: root.highlight ? Theme.neuBg : Theme.neuHoverHighlight
+        // Matches the chips below it: a hovered row gets the accent hairline,
+        // a held one keeps its well without it.
+        outline: root.hovered && !root.highlight ? Theme.neuAccentText
+                                                 : "transparent"
     }
 
     Item {

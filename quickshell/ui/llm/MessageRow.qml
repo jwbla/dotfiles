@@ -17,6 +17,7 @@ Item {
     required property string kind        // user | assistant | error
     required property string text
     required property string reasoning
+    required property string stats
     required property bool done
 
     readonly property bool isUser: kind === "user"
@@ -76,7 +77,7 @@ Item {
                 visible: !root.isUser
 
                 Text {
-                    text: root.isError ? Icons.warning : Icons.code
+                    text: root.isError ? Icons.warning : Icons.robot
                     color: root.isError ? Theme.neuErrorText : Theme.neuAccentText
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontS
@@ -200,6 +201,18 @@ Item {
                         }
                     }
                 }
+            }
+
+            // What the answer cost. Dim and small: worth having, never worth
+            // reading before the answer itself.
+            Text {
+                Layout.fillWidth: true
+                visible: root.stats !== ""
+                text: root.stats
+                color: Theme.neuTextDim
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontXs
+                elide: Text.ElideRight
             }
 
             // The caret, while the sentence is still arriving.

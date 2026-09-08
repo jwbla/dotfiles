@@ -66,7 +66,19 @@ PanelWindow {
         anchors.fill: parent
         focus: root.shown
 
-        Keys.onEscapePressed: Notifs.close()
+        // Shift+Esc clears the backlog without closing the panel -- Slack's
+        // gesture. Closing already marks everything read; this is for when you
+        // want to keep reading but stop the bell nagging. Handled here rather
+        // than in Keys.onPressed because escapePressed fires for Escape whatever
+        // the modifiers are, and would otherwise close the panel out from under
+        // the shortcut.
+        Keys.onEscapePressed: (event) => {
+            if (event.modifiers & Qt.ShiftModifier)
+                Notifs.markAllRead();
+            else
+                Notifs.close();
+            event.accepted = true;
+        }
 
         NeuSurface {
             id: panel

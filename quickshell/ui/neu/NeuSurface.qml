@@ -31,6 +31,11 @@ Item {
     property color glow: "transparent"
     property int glowBlur: Theme.sizeS
 
+    /** Optional hairline outline. Transparent by default, so it costs nothing
+     *  until something asks for it -- a hover, a focus ring, a selected row. */
+    property color outline: "transparent"
+    property int outlineWidth: Theme.borderXs
+
     readonly property int reach: Neu.reach(tier)
     readonly property var _t: mode === "inset" ? Neu.insetTier(tier) : Neu.tier(tier)
 
@@ -87,20 +92,31 @@ Item {
     // takes the first's output, so the shape's alpha carries through and both
     // shadows land inside the same rounded rect.
 
+    // layer.enabled is CONSTANT. Binding it to the mode looked like a saving --
+    // no layer texture for a surface that is not inset -- but tearing the layer
+    // down destroys the texture the InnerShadow chain below reads from, and the
+    // chain never re-acquires it when the layer comes back. The practical
+    // effect: any surface that went inset -> raised -> inset lost its well for
+    // good, so one hover over a chip flattened it for the rest of the session.
     Rectangle {
         id: insetShape
         anchors.fill: parent
         radius: root.radius
         color: root.surface
         visible: false
-        layer.enabled: root.mode === "inset"
+        layer.enabled: true
     }
 
+    // NOT cached. The source Rectangle's layer is torn down whenever `mode`
+    // leaves "inset" -- which is every hover on a chip -- and a cached effect
+    // does not re-render when that layer comes back. The well simply never
+    // returned: hover a chip in the glance once and it stayed flat for the rest
+    // of the session. These shapes are static, so Qt redraws them only when
+    // something actually changes; the cache was buying nothing.
     InnerShadow {
         id: insetDark
         anchors.fill: parent
         visible: false
-        cached: true
         source: insetShape
         color: Theme.neuShadowDark
         horizontalOffset: root._t.o
@@ -112,13 +128,28 @@ Item {
     InnerShadow {
         anchors.fill: parent
         visible: root.mode === "inset"
-        cached: true
         source: insetDark
         color: Theme.neuShadowLight
         horizontalOffset: -root._t.o
         verticalOffset: -root._t.o
         radius: root._t.b
         samples: Math.min(33, root._t.b * 2 + 1)
+    }
+
+    // ---- outline ----------------------------------------------------------
+    //
+    // Above both the face and the inset chain, because it has to read the same
+    // whichever of them drew the surface; below the children, because it is
+    // only ever a hairline at the edge and content should sit on top of it.
+
+    Rectangle {
+        anchors.fill: parent
+        radius: root.radius
+        color: "transparent"
+        visible: root.outline.a > 0
+        border.width: root.outlineWidth
+        border.color: root.outline
+        Behavior on border.color { ColorAnimation { duration: Theme.fastMs } }
     }
 
     // ---- children ---------------------------------------------------------

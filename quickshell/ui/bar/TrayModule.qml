@@ -34,10 +34,21 @@ Row {
 
             HoverHandler { id: hover }
 
+            // Third-party icons in a design language that is not ours: the one
+            // place on this bar where the user genuinely cannot know what an
+            // icon is. SNI ships the name; show it.
+            NeuTooltip {
+                target: parent
+                text: modelData.tooltipTitle || modelData.title || modelData.id || ""
+                show: hover.hovered
+            }
+
             TapHandler {
                 acceptedButtons: Qt.LeftButton | Qt.RightButton
-                onTapped: (e) => {
-                    if (e.button === Qt.RightButton) modelData.display(null, 0, 0);
+                // Same (eventPoint, button) signature as BarButton: the menu
+                // was unreachable because .button was read off the wrong one.
+                onTapped: (point, button) => {
+                    if (button === Qt.RightButton) modelData.display(null, 0, 0);
                     else modelData.activate();
                 }
             }

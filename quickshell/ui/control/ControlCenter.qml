@@ -125,7 +125,12 @@ PanelWindow {
                 NeuSlider {
                     Layout.fillWidth: true
                     value: Sys.volumePct / 100
-                    onMoved: (v) => Sys.setVolume(v * 100)
+                    // Same policy as the bar module: raising a muted sink is
+                    // a request to hear something, not to move a silent number.
+                    onMoved: (v) => {
+                        if (Sys.muted && v * 100 > Sys.volumePct) Sys.setMuted(false);
+                        Sys.setVolume(v * 100);
+                    }
                 }
 
                 Text {

@@ -24,6 +24,11 @@ Row {
             // Icon only. Seven names would crowd out the workspaces in the
             // centre, and these are the apps whose glyphs you already know.
             label: ""
+            // The names dropped above have to go somewhere, and this is it --
+            // with the bind that does the same thing without the mouse, which
+            // is the more useful half once you have seen the name once.
+            tip: (modelData.name || modelData.wmClass || "")
+                 + (modelData.hotkey ? " · " + modelData.hotkey : "")
             // Inset relief for a running app -- "raised = pressable, inset =
             // active/held" is the DS grammar, and running IS the active state.
             active: Windows.isRunning(modelData.wmClass)

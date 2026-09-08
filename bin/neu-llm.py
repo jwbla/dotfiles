@@ -36,9 +36,11 @@ then the worst a confused model can do is read a file it was already allowed to.
 from __future__ import annotations
 
 import argparse
+import difflib
 import fnmatch
 import json
 import os
+import select
 import subprocess
 import sys
 import time
@@ -88,6 +90,12 @@ BASE_URL = os.environ.get("NEU_LLM_URL", "http://localhost:1234/v1").rstrip("/")
 MODEL = os.environ.get("NEU_LLM_MODEL", "").strip()
 API_KEY = os.environ.get("NEU_LLM_KEY", "").strip()
 USE_TOOLS = os.environ.get("NEU_LLM_TOOLS", "1") != "0"
+CAN_WRITE = os.environ.get("NEU_LLM_WRITE", "1") != "0"
+
+# The one directory the model may write to without asking. Anything else inside
+# the roots costs an approval; anything outside them is refused outright.
+SCRATCH = Path(os.environ.get(
+    "NEU_LLM_SCRATCH", str(Path.home() / "dev/llm-scratch"))).expanduser()
 CTX_TURNS = int(os.environ.get("NEU_LLM_CTX", "12"))
 MAX_STEPS = int(os.environ.get("NEU_LLM_MAX_STEPS", "6"))
 
@@ -106,6 +114,12 @@ MAX_READ_BYTES = 64 * 1024
 MAX_READ_LINES = 400
 MAX_MATCHES = 60
 TOOL_TIMEOUT = 15
+MAX_WRITE_BYTES = 256 * 1024
+
+# How long a write waits for a human. The panel can be dismissed with a turn in
+# flight, and a tool call blocked forever on a closed sidebar is a process that
+# never exits. Silence is a no.
+APPROVE_TIMEOUT = 180
 
 DEFAULT_ROOTS = "~/dev:~/.config:~/.local/state/neu"
 
@@ -144,8 +158,14 @@ except (AttributeError, OSError):
 
 def emit(**event) -> None:
     """One NDJSON event per line. The panel reads these with a SplitParser."""
-    sys.stdout.write(json.dumps(event, ensure_ascii=False) + "\n")
-    sys.stdout.flush()
+    try:
+        sys.stdout.write(json.dumps(event, ensure_ascii=False) + "\n")
+        sys.stdout.flush()
+    except BrokenPipeError:
+        # Whoever was reading us is gone -- the panel closed, or the shell
+        # reloaded. There is nobody to tell, so stop rather than unwind through
+        # every caller printing tracebacks at a closed pipe.
+        os._exit(0)
 
 
 def audit(name: str, args: dict, verdict: str) -> None:
@@ -201,6 +221,83 @@ def safe_path(raw: str, must_be_dir: bool = False) -> Path:
     if not must_be_dir and p.is_dir():
         raise Denied(f"{p} is a directory -- use list_dir")
     return p
+
+
+def write_path(raw: str) -> tuple[Path, bool]:
+    """Resolve a path to write to, and say whether it is free of charge.
+
+    The scratch directory is the only place the model may write unasked, so it
+    is checked on the RESOLVED path -- "~/dev/llm-scratch/../../.bashrc" is not
+    in the scratch directory no matter how it is spelled. Everything else in the
+    roots is writable only with a human's say-so, and the deny list is absolute:
+    no approval makes ~/.ssh or a *.env file writable.
+    """
+    if not raw or not str(raw).strip():
+        raise Denied("no path given")
+    try:
+        p = Path(str(raw)).expanduser()
+        p = (p if p.is_absolute() else SCRATCH / p).resolve()
+    except (OSError, RuntimeError) as exc:
+        raise Denied(f"cannot resolve {raw}: {exc}") from exc
+
+    for part in p.parts:
+        low = part.lower()
+        for pat in DENY_GLOBS:
+            if fnmatch.fnmatch(low, pat):
+                raise Denied(f"{part} is on the deny list and is never writable")
+
+    scratch = SCRATCH.resolve() if SCRATCH.exists() else SCRATCH
+    if p == scratch or scratch in p.parents:
+        return p, True
+
+    if not any(p == r or r in p.parents for r in roots()):
+        raise Denied(f"{p} is outside the allowed roots -- write it under "
+                     f"{SCRATCH} instead")
+    return p, False
+
+
+def write_preview(p: Path, content: str) -> str:
+    """What the human is being asked to agree to, in a few lines."""
+    new_lines = content.splitlines()
+    if p.exists():
+        try:
+            old_lines = p.read_text(errors="replace").splitlines()
+        except OSError:
+            old_lines = []
+        diff = list(difflib.unified_diff(old_lines, new_lines,
+                                         fromfile="current", tofile="proposed",
+                                         lineterm="", n=1))
+        body = "\n".join(diff[:30]) or "(identical)"
+        return f"overwrites {len(old_lines)} lines\n{body}"
+    head = "\n".join(new_lines[:12])
+    more = "" if len(new_lines) <= 12 else f"\n… {len(new_lines) - 12} more lines"
+    return f"new file, {len(new_lines)} lines\n{head}{more}"
+
+
+def tool_write_file(path: str = "", content: str = "", **_) -> str:
+    if not CAN_WRITE:
+        return "denied: writing is turned off (NEU_LLM_WRITE=0)"
+    if len(content.encode("utf-8")) > MAX_WRITE_BYTES:
+        return f"error: refusing to write more than {MAX_WRITE_BYTES} bytes"
+
+    p, free = write_path(path)
+    if not free:
+        verdict = APPROVER({"tool": "write_file", "path": str(p),
+                            "preview": write_preview(p, content),
+                            "bytes": len(content.encode("utf-8"))})
+        if not verdict:
+            audit("write_file", {"path": str(p)}, "declined by operator")
+            return (f"denied: the operator declined the write to {p}. Do not try "
+                    f"another path -- ask them what they want instead.")
+
+    try:
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(content)
+    except OSError as exc:
+        return f"error: {exc}"
+    audit("write_file", {"path": str(p)}, "auto (scratch)" if free
+          else ("approved (auto-approve on)" if AUTO_ANSWER[0] else "approved by operator"))
+    return f"wrote {len(content.splitlines())} lines to {p}"
 
 
 def run(cmd: list[str], cwd: Path | None = None) -> str:
@@ -321,6 +418,19 @@ TOOLS = {
         },
         "required": ["repo", "what"],
     }),
+    "write_file": (tool_write_file, {
+        "description": "Write a text file. Call it directly, whatever the path: "
+                       f"under the scratch directory ({SCRATCH}) -- where a "
+                       "relative path goes -- it is written at once, and "
+                       "anywhere else the operator is shown a diff and approves "
+                       "or declines it themselves. Overwrites what is there.",
+        "properties": {
+            "path": {"type": "string",
+                     "description": "File path, or a bare name for scratch."},
+            "content": {"type": "string", "description": "Full file contents."},
+        },
+        "required": ["path", "content"],
+    }),
     "system_status": (tool_system_status, {
         "description": "This desktop's battery, network, volume, cpu, memory and "
                        "disk, as JSON.",
@@ -340,6 +450,50 @@ def tool_schema() -> list[dict]:
             for name, (_, spec) in TOOLS.items()]
 
 
+def deny_all(_request: dict) -> bool:
+    """Terminal default: nobody is watching, so nothing outside scratch lands."""
+    return False
+
+
+def approve_all(_request: dict) -> bool:
+    return True
+
+
+def ask_panel(request: dict) -> bool:
+    """Put the write in front of the human and block until they answer.
+
+    The panel is the only thing on the other end of stdin during a turn, so the
+    request goes out as an event and the reply comes back as one line of JSON.
+    """
+    emit(t="approve", id=APPROVAL_ID[0], **request)
+    deadline = time.monotonic() + APPROVE_TIMEOUT
+    while time.monotonic() < deadline:
+        ready, _, _ = select.select([sys.stdin], [], [],
+                                    max(0.0, deadline - time.monotonic()))
+        if not ready:
+            break
+        line = sys.stdin.readline()
+        if line == "":       # the panel went away
+            break
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            msg = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if str(msg.get("id", "")) == str(APPROVAL_ID[0]):
+            AUTO_ANSWER[0] = bool(msg.get("auto"))
+            return bool(msg.get("approve"))
+    emit(t="approve_timeout", id=APPROVAL_ID[0])
+    return False
+
+
+APPROVER = deny_all
+APPROVAL_ID = [""]     # the tool call currently awaiting an answer
+AUTO_ANSWER = [False]  # was the last yes a person's, or a held-open gate?
+
+
 def call_tool(name: str, args: dict) -> str:
     fn = TOOLS.get(name)
     if fn is None:
@@ -347,7 +501,10 @@ def call_tool(name: str, args: dict) -> str:
         return f"error: no such tool {name}"
     try:
         result = fn[0](**args) if isinstance(args, dict) else fn[0]()
-        audit(name, args, "ok")
+        # write_file records its own verdict (auto / approved / declined), which
+        # is the more useful line; a generic "ok" beside it is just noise.
+        if name != "write_file":
+            audit(name, args, "ok")
         return result
     except Denied as exc:
         audit(name, args, f"denied: {exc}")
@@ -397,8 +554,12 @@ SYSTEM_PROMPT = (
     "You have read-only tools for the filesystem, ripgrep, git and this "
     "machine's own sensors; use them instead of guessing, and say plainly when "
     "a path is denied rather than trying another way around it. "
-    "Never claim to have changed a file: you cannot write, and pretending "
-    "otherwise is worse than useless."
+    "Never claim to have done something you have not: say what the tools "
+    "actually returned. "
+    "Do not ask for permission in prose. Writing outside the scratch directory "
+    "puts the request in front of the operator by itself, with a diff, and they "
+    "can decline it -- so call the tool and let them answer there. Asking first "
+    "in text only makes them answer twice."
 )
 
 
@@ -476,24 +637,44 @@ def catalogue() -> list[dict]:
         return []
 
 
+def loaded_model(found: list[dict] | None = None) -> str:
+    """Whatever the box currently holds in memory, if anything."""
+    for m in (found if found is not None else catalogue()):
+        if m["state"] in ("loaded", "loading") and m["type"] in ("llm", "vlm"):
+            return m["id"]
+    return ""
+
+
 def resolve_model(override: str = "") -> str:
-    """Explicit pick, then the environment, then what the panel remembered."""
-    for candidate in (override, MODEL, remembered_model()):
+    """Explicit pick, then the environment, then the box, then a remembered one.
+
+    The loaded model outranks the remembered one on purpose: the server holds
+    one at a time, so naming a different one costs an eviction and a minute of
+    loading. An explicit --model still wins -- that IS the request to switch.
+    """
+    for candidate in (override, MODEL):
         if candidate:
             return candidate
+
+    found = catalogue()
+    hot = loaded_model(found)
+    remembered = remembered_model()
+    if remembered:
+        if not hot or remembered == hot:
+            return remembered
+        return hot
     # Nothing chosen yet. Prefer one already in VRAM -- picking a cold 120b as
     # a default means the first question of the day takes four minutes.
     found = catalogue()
-    for m in found:
-        if m["state"] in ("loaded", "loading") and m["type"] == "llm":
-            return m["id"]
+    if hot:
+        return hot
     for m in found:
         if m["type"] == "llm" and m["id"]:
             return m["id"]
     return found[0]["id"] if found else "local-model"
 
 
-def stream_turn(model: str, messages: list[dict]) -> dict:
+def stream_turn(model: str, messages: list[dict], stats: dict | None = None) -> dict:
     """One request. Streams tokens out as they land, returns the finished message.
 
     Two things make this more than a loop over lines: reasoning models put their
@@ -507,6 +688,9 @@ def stream_turn(model: str, messages: list[dict]) -> dict:
         "messages": messages,
         "stream": True,
         "temperature": 0.4,
+        # The server counts tokens properly; asking beats guessing from the
+        # number of chunks, which is only ever an approximation of one token.
+        "stream_options": {"include_usage": True},
     }
     if USE_TOOLS:
         body["tools"] = tool_schema()
@@ -526,7 +710,11 @@ def stream_turn(model: str, messages: list[dict]) -> dict:
         # silently turns every apostrophe and em dash the model writes into
         # mojibake. SSE is UTF-8 by specification; say so.
         resp.encoding = "utf-8"
-        for raw in resp.iter_lines(decode_unicode=True):
+        # chunk_size=1: iter_lines otherwise waits for its 512-byte buffer to
+        # fill before yielding anything, so a slow first token and a fast one
+        # look identical and the words arrive in clumps. SSE wants them as they
+        # land, which costs a little more syscall traffic and is worth it.
+        for raw in resp.iter_lines(decode_unicode=True, chunk_size=1):
             if not raw or not raw.startswith("data:"):
                 continue
             payload = raw[5:].strip()
@@ -536,16 +724,29 @@ def stream_turn(model: str, messages: list[dict]) -> dict:
                 chunk = json.loads(payload)
             except json.JSONDecodeError:
                 continue
+            # The usage chunk arrives last and carries no choices.
+            usage = chunk.get("usage")
+            if usage and stats is not None:
+                stats["input"] = stats.get("input", 0) + (usage.get("prompt_tokens") or 0)
+                stats["output"] = stats.get("output", 0) + (usage.get("completion_tokens") or 0)
+                stats["counted"] = True
+
             choice = (chunk.get("choices") or [{}])[0]
             finish = choice.get("finish_reason") or finish
             delta = choice.get("delta") or {}
 
             think = delta.get("reasoning") or delta.get("reasoning_content")
             if think:
+                if stats is not None:
+                    stats.setdefault("first_at", time.monotonic())
+                    stats["chunks"] = stats.get("chunks", 0) + 1
                 emit(t="reasoning", v=think)
 
             piece = delta.get("content")
             if piece:
+                if stats is not None:
+                    stats.setdefault("first_at", time.monotonic())
+                    stats["chunks"] = stats.get("chunks", 0) + 1
                 content.append(piece)
                 emit(t="token", v=piece)
 
@@ -571,6 +772,29 @@ def stream_turn(model: str, messages: list[dict]) -> dict:
     return message
 
 
+def emit_stats(stats: dict) -> None:
+    """What the turn cost, in the two units that matter: seconds and tokens.
+
+    Time-to-first-token and generation rate are separate numbers on purpose. A
+    slow answer from a cold model is nearly all TTFT and says nothing about the
+    model's speed; a slow answer from a hot one is the rate. Reporting only the
+    total would blur the two and make every cold start look like a slow model.
+    """
+    now = time.monotonic()
+    total_ms = int((now - stats.get("started", now)) * 1000)
+    first = stats.get("first_at")
+    ttft_ms = int((first - stats["started"]) * 1000) if first else None
+    out = stats.get("output") or 0
+    if not stats.get("counted"):
+        # No usage from the server: chunks are the honest fallback, and the
+        # panel is told so rather than being handed a number that looks exact.
+        out = stats.get("chunks", 0)
+    gen_s = max(0.001, (now - (first or stats.get("started", now))))
+    emit(t="stats", ms=total_ms, ttft_ms=ttft_ms,
+         input=stats.get("input") or 0, output=out,
+         tps=round(out / gen_s, 1), exact=bool(stats.get("counted")))
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("prompt", nargs="*", help="the message; omit with --stdin")
@@ -586,6 +810,15 @@ def main() -> int:
                     help="model id for this turn, overriding the remembered one")
     ap.add_argument("--select", default="",
                     help="remember this model for later turns, then exit")
+    ap.add_argument("--panel", action="store_true",
+                    help="protocol mode: stdin carries JSON lines -- the prompt "
+                         "first, then approvals. Used by the quickshell sidebar.")
+    ap.add_argument("--yes", action="store_true",
+                    help="approve writes outside the scratch directory without "
+                         "asking. Only meaningful in terminal mode.")
+    ap.add_argument("--end-session", action="store_true",
+                    help="forget this conversation. Nothing else to tear down: "
+                         "the builtin holds no server and no daemon.")
     args = ap.parse_args()
 
     STATE_DIR.mkdir(parents=True, exist_ok=True)
@@ -607,6 +840,11 @@ def main() -> int:
             emit(t="probe", ok=False, endpoint=BASE_URL, msg=short_error(exc))
             return 1
 
+    if args.end_session:
+        conv_path(args.conv).unlink(missing_ok=True)
+        emit(t="session_ended", harness="builtin", stopped=False)
+        return 0
+
     if args.reset:
         conv_path(args.conv).unlink(missing_ok=True)
 
@@ -616,7 +854,21 @@ def main() -> int:
         emit(t="done", conv=args.conv)
         return 0
 
-    text = sys.stdin.read().strip() if args.stdin else " ".join(args.prompt).strip()
+    # Three ways in, one meaning. The panel keeps stdin OPEN after the prompt
+    # so a write can be put to a human mid-turn; the terminal closes it, and
+    # says so by answering every such request itself.
+    global APPROVER
+    if args.panel:
+        APPROVER = ask_panel
+        first = sys.stdin.readline()
+        try:
+            text = (json.loads(first or "{}").get("prompt") or "").strip()
+        except json.JSONDecodeError:
+            text = first.strip()
+    else:
+        APPROVER = approve_all if args.yes else deny_all
+        text = sys.stdin.read().strip() if args.stdin else " ".join(args.prompt).strip()
+
     if not text:
         emit(t="error", msg="empty prompt")
         return 2
@@ -637,9 +889,10 @@ def main() -> int:
     convo.append(user)
 
     started = time.monotonic()
+    stats: dict = {"started": started}
     try:
         for _ in range(MAX_STEPS):
-            reply = stream_turn(model, convo)
+            reply = stream_turn(model, convo, stats)
             calls = reply.get("tool_calls") or []
             stored = {k: v for k, v in reply.items() if not k.startswith("_")}
             convo.append(stored)
@@ -654,6 +907,7 @@ def main() -> int:
                     cargs = json.loads(call["function"]["arguments"] or "{}")
                 except json.JSONDecodeError:
                     cargs = {}
+                APPROVAL_ID[0] = call["id"]
                 emit(t="tool", id=call["id"], name=name, args=cargs)
                 result = call_tool(name, cargs)
                 emit(t="tool_result", id=call["id"], name=name,
@@ -679,6 +933,7 @@ def main() -> int:
         emit(t="error", msg=str(exc))
         return 1
 
+    emit_stats(stats)
     emit(t="done", conv=args.conv, ms=int((time.monotonic() - started) * 1000))
     return 0
 

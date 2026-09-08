@@ -31,13 +31,26 @@ PanelWindow {
 
     function open() {
         if (!shown) {
-            Llm.reload();
+            // The conversation lives in the service, which outlives this
+            // window, so reopening shows whatever was already there --
+            // including a turn still streaming and a permission still waiting.
+            // Only a panel with nothing in it needs the stored history read.
+            if (Llm.chat.count === 0 && !Llm.busy)
+                Llm.reload();
+            else
+                Llm.refresh();
             shown = true;
         }
+        Llm.panelOpen = true;
+        Llm.unread = false;   // you are looking at it now
         input.forceActiveFocus();
     }
 
-    function close() { shown = false; picker.open = false; }
+    function close() {
+        shown = false;
+        picker.open = false;
+        Llm.panelOpen = false;
+    }
     function toggle() { shown ? close() : open(); }
 
     // Open with a question already asked, for a keybind or a script that has
@@ -51,10 +64,54 @@ PanelWindow {
     readonly property string where: Llm.endpoint
         .replace(/^https?:\/\//, "").replace(/\/v1\/?$/, "")
 
-    // Click anywhere off the panel to dismiss.
+    Connections {
+        target: Llm
+        function onSummoned(prefill) {
+            root.open();
+            if (prefill !== "") {
+                input.text = prefill;
+                input.cursorPosition = input.text.length;
+            }
+        }
+    }
+
+    // Click off the panel to dismiss it.
+    //
+    // Decided by geometry, not by event propagation. The controls in here are
+    // TapHandlers, which do not consume the press the way a MouseArea does, so
+    // a full-window handler saw every click on the panel too -- approving a
+    // permission or picking a model dismissed the sidebar out from under you.
+    // Comparing the tap position against the panel's rectangle cannot be fooled
+    // by whatever handler happened to be on top.
     Item {
         anchors.fill: parent
-        TapHandler { onTapped: root.close() }
+
+        TapHandler {
+            onTapped: (point) => {
+                const pt = point.scenePosition;
+                const inPanel = pt.x >= panel.x && pt.x <= panel.x + panel.width
+                             && pt.y >= panel.y && pt.y <= panel.y + panel.height;
+                if (!inPanel) {
+                    root.close();
+                    return;
+                }
+                // Inside the panel but outside an open dropdown: close the
+                // dropdown only, the way every other menu behaves.
+                if (picker.open) {
+                    const inPicker = pt.x >= panel.x + picker.x
+                                  && pt.x <= panel.x + picker.x + picker.width
+                                  && pt.y >= panel.y + picker.y
+                                  && pt.y <= panel.y + picker.y + picker.height;
+                    // ...but never the click that just opened it. This handler
+                    // sees the same tap as the model row's, so without this the
+                    // menu opened and shut on one click and looked dead.
+                    const t = modelRow.mapToItem(null, 0, 0);
+                    const inTrigger = pt.x >= t.x && pt.x <= t.x + modelRow.width
+                                   && pt.y >= t.y && pt.y <= t.y + modelRow.height;
+                    if (!inPicker && !inTrigger) picker.open = false;
+                }
+            }
+        }
     }
 
     NeuSurface {
@@ -93,7 +150,7 @@ PanelWindow {
                 spacing: Theme.sizeS
 
                 Text {
-                    text: Icons.code
+                    text: Icons.robot
                     color: Theme.neuAccentText
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontL
@@ -117,6 +174,8 @@ PanelWindow {
                     // Tapping it opens the picker: the box holds several models
                     // and LM Studio loads whichever one a request names.
                     RowLayout {
+                        id: modelRow
+
                         Layout.fillWidth: true
                         spacing: Theme.sizeXs
 
@@ -162,6 +221,16 @@ PanelWindow {
                     onActivated: Llm.reset()
                 }
 
+                // Ends the session and stops whatever the harness left running
+                // -- opencode's server, in particular, which is deliberately
+                // kept warm between messages.
+                BarLikeButton {
+                    glyph: Icons.power
+                    tip: "end session"
+                    tint: Theme.neuTextDim
+                    onActivated: Llm.endSession()
+                }
+
                 BarLikeButton {
                     glyph: Icons.times
                     tip: "close"
@@ -193,7 +262,8 @@ PanelWindow {
                     required property int index
 
                     width: ListView.view.width
-                    sourceComponent: model.kind === "tool" ? toolCard : messageRow
+                    sourceComponent: model.kind === "approve" ? approvalCard
+                                   : model.kind === "tool" ? toolCard : messageRow
 
                     Component {
                         id: messageRow
@@ -201,6 +271,19 @@ PanelWindow {
                             kind: model.kind
                             text: model.text
                             reasoning: model.reasoning
+                            stats: model.stats
+                            done: model.done
+                        }
+                    }
+
+                    Component {
+                        id: approvalCard
+                        ApprovalCard {
+                            tool: model.tool
+                            args: model.args
+                            text: model.text
+                            rowId: model.id
+                            ok: model.ok
                             done: model.done
                         }
                     }
@@ -270,9 +353,10 @@ PanelWindow {
 
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignVCenter
-                        // Four lines of a long question before it scrolls; past
-                        // that the transcript matters more than the draft.
-                        Layout.maximumHeight: Theme.fontM * 6
+                        // Enough for a whole alert handed over by the glance
+                        // (about eight lines) before it scrolls; past that the
+                        // transcript matters more than the draft.
+                        Layout.maximumHeight: Theme.fontM * 11
                         color: Theme.neuText
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontM
@@ -296,6 +380,17 @@ PanelWindow {
                         }
 
                         Keys.onEscapePressed: root.close()
+                        // Shift+Tab holds the permission gate open or lets it
+                        // shut -- the same reflex as clearing notifications one
+                        // panel over, on the toggle that matters most here.
+                        Keys.onPressed: (event) => {
+                            if (event.key === Qt.Key_Backtab
+                                || (event.key === Qt.Key_Tab
+                                    && (event.modifiers & Qt.ShiftModifier))) {
+                                Llm.autoApprove = !Llm.autoApprove;
+                                event.accepted = true;
+                            }
+                        }
                         // Enter sends, Shift+Enter is a newline -- the way every
                         // chat box works, and the reason this is a TextEdit.
                         Keys.onReturnPressed: (e) => {
@@ -317,15 +412,77 @@ PanelWindow {
                 }
             }
 
-            Text {
+            RowLayout {
                 Layout.fillWidth: true
-                text: Llm.warming ? "waiting — a cold model loads first"
-                     : Llm.busy ? "streaming — esc closes, the turn keeps going"
-                                : "enter sends · shift+enter newline"
-                color: Theme.neuTextDim
-                font.family: Theme.fontFamily
-                font.pixelSize: Theme.fontXs
-                horizontalAlignment: Text.AlignRight
+                spacing: Theme.sizeS
+
+                // Auto-approve. Amber rather than accent when it is on: this is
+                // a guard being held open, not a feature being enjoyed, and the
+                // colour should say so every time you glance at the panel.
+                Item {
+                    implicitWidth: autoRow.implicitWidth
+                    implicitHeight: 18
+
+                    RowLayout {
+                        id: autoRow
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: Theme.sizeXs
+
+                        // raised = pressable, inset = held: the grammar in
+                        // NeuSurface, applied to a checkbox. The catch is that
+                        // an inset tier needs room to cast its shadows -- at
+                        // 13px the xs offset and blur had nowhere to land and
+                        // the checked state read as a flat dead square, which
+                        // is the one thing flat is reserved to mean. 16px is
+                        // the smallest box where "held" is legible.
+                        NeuSurface {
+                            implicitWidth: 16
+                            implicitHeight: 16
+                            mode: Llm.autoApprove ? "inset" : "raised"
+                            tier: "xs"
+                            radius: Math.round(Theme.radiusS / 2)
+                            surface: Llm.autoApprove ? Theme.neuBg : Theme.neuBgComponent
+                            // The well glows amber while the gate is open, the
+                            // same signal the label and the bar glyph carry.
+                            glow: Llm.autoApprove ? Theme.neuWarning : "transparent"
+                            glowBlur: Theme.sizeXs
+
+                            Text {
+                                anchors.centerIn: parent
+                                visible: Llm.autoApprove
+                                text: Icons.check
+                                color: Theme.neuWarningText
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontXs
+                            }
+                        }
+
+                        Text {
+                            text: "auto-approve"
+                            color: Llm.autoApprove ? Theme.neuWarningText
+                                 : (autoHover.hovered ? Theme.neuTextMuted : Theme.neuTextDim)
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontXs
+                            Behavior on color { ColorAnimation { duration: Theme.fastMs } }
+                        }
+                    }
+
+                    HoverHandler { id: autoHover }
+                    TapHandler { onTapped: Llm.autoApprove = !Llm.autoApprove }
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: Llm.autoApprove ? "every request is granted"
+                         : Llm.warming ? "waiting — a cold model loads first"
+                         : Llm.busy ? "streaming — esc closes, the turn keeps going"
+                                    : "enter sends · shift+enter newline"
+                    color: Llm.autoApprove ? Theme.neuWarningText : Theme.neuTextDim
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontXs
+                    horizontalAlignment: Text.AlignRight
+                    elide: Text.ElideRight
+                }
             }
         }
     }
@@ -351,11 +508,107 @@ PanelWindow {
         radius: Theme.radiusM
         surface: Theme.neuBgComponent
 
+
+
         ColumnLayout {
             id: models
             anchors.fill: parent
             anchors.margins: Theme.sizeS
             spacing: 2
+
+            // ---- which agent, before which model -------------------------
+            // The harness decides what the model is allowed to do; the model
+            // only decides how well. So it is the first choice on the menu.
+            Text {
+                Layout.fillWidth: true
+                Layout.leftMargin: Theme.sizeS
+                text: "harness"
+                color: Theme.neuTextDim
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontXs
+                font.letterSpacing: Theme.trackingSection
+            }
+
+            Repeater {
+                model: Llm.harnesses
+
+                delegate: Item {
+                    id: hrow
+
+                    required property var modelData
+
+                    Layout.fillWidth: true
+                    implicitHeight: 30
+
+                    readonly property bool current: hrow.modelData.id === Llm.harness
+                    readonly property bool usable: !!hrow.modelData.available
+
+                    NeuSurface {
+                        anchors.fill: parent
+                        visible: hrow.current || hHover.hovered
+                        mode: hrow.current ? "inset" : "flat"
+                        tier: "xs"
+                        radius: Theme.radiusS
+                        surface: hrow.current ? Theme.neuBg : Theme.neuHoverHighlight
+                    }
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: Theme.sizeS
+                        anchors.rightMargin: Theme.sizeS
+                        spacing: Theme.sizeS
+
+                        Text {
+                            text: hrow.current ? Icons.check
+                                : (hrow.usable ? Icons.terminal : Icons.times)
+                            color: hrow.current ? Theme.neuAccentText
+                                 : (hrow.usable ? Theme.neuTextMuted : Theme.neuTextDim)
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontS
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: hrow.modelData.name
+                            color: hrow.usable ? (hrow.current ? Theme.neuText : Theme.neuTextMuted)
+                                               : Theme.neuTextDim
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontXs
+                            elide: Text.ElideRight
+                        }
+
+                        // An absent harness still earns a row: it is how you
+                        // find out the thing exists and what installs it.
+                        Text {
+                            text: hrow.usable ? hrow.modelData.version : "not installed"
+                            color: Theme.neuTextDim
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontXs
+                        }
+                    }
+
+                    HoverHandler { id: hHover }
+                    TapHandler {
+                        onTapped: {
+                            if (!hrow.usable) return;   // nothing to switch to
+                            Llm.selectHarness(hrow.modelData.id);
+                            picker.open = false;
+                        }
+                    }
+                }
+            }
+
+            NeuDivider { Layout.fillWidth: true }
+
+            Text {
+                Layout.fillWidth: true
+                Layout.leftMargin: Theme.sizeS
+                text: "model"
+                color: Theme.neuTextDim
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontXs
+                font.letterSpacing: Theme.trackingSection
+            }
 
             Repeater {
                 model: Llm.models

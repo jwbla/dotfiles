@@ -10,6 +10,9 @@ BarButton {
     id: root
 
     property string tooltipText: ""
+    // Parsed from the weather script every 15 minutes since this module was
+    // written, and until now thrown straight away.
+    tip: tooltipText
 
     visible: label !== ""
     tint: Theme.neuTextMuted

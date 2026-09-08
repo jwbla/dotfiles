@@ -59,6 +59,10 @@ Singleton {
     readonly property string code: "\uf121"
     readonly property string files: "\uf07c"
     readonly property string tv: "\uf26c"
+    readonly property string hourglass: "\uf252"
+    readonly property string arch: "\uf303"
+    readonly property string robot: "\udb81\udea9"
+    readonly property string exclaim: "\uf12a"
 
     /** Pick from a low->high ramp by a 0..1 fraction. */
     function ramp(list, frac) {

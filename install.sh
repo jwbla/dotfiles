@@ -112,7 +112,15 @@ PKGS_DESKTOP_ARCH=(
 )
 
 # Used by panes and binds, but the shell degrades gracefully without them.
-PKGS_OPTIONAL_ARCH=(task timew tea playerctl copyq wtype grim slurp ghostty kitty)
+#   opencode   one of the agent harnesses SUPER+I can drive (see below); the
+#              sidebar falls back to its own built-in harness without it
+PKGS_OPTIONAL_ARCH=(task timew tea playerctl copyq wtype grim slurp ghostty kitty
+                    opencode)
+
+# The other harness lives on npm rather than in the repos. Deliberately NOT
+# installed for you -- a global npm package is the operator's call, not an
+# installer's -- but named here so the detection below offers the exact command.
+PKG_HARNESS_NPM="@earendil-works/pi-coding-agent"
 
 missing_pkgs() {
     local -n _list=$1
@@ -281,6 +289,30 @@ if [[ "$MODE" == "full" ]]; then
     if [[ ! -f "$HOME/.config/neu/llm.env" ]]; then
         echo "  ℹ️  LLM sidebar idle until ~/.config/neu/llm.env exists" \
              "(template: bin/neu-llm.env.example)"
+    fi
+
+    # Which agent harness can answer on SUPER+I. The builtin always can; pi and
+    # opencode are optional and bring bash, file writes and MCP with them, so
+    # say what is here and what installing the rest would buy.
+    echo "🤖 Agent harnesses (SUPER+I):"
+    "$SCRIPT_DIR/bin/neu-llm-harness.sh" --detect | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+for h in d['harnesses']:
+    mark = '✅' if h['available'] else '  '
+    where = h['version'] or 'not installed'
+    star = ' (active)' if h['id'] == d['active'] else ''
+    print(f"  {mark} {h['name']:<14} {where}{star}")
+    print(f"       {h['note']}")
+    if not h['available']:
+        print(f"       install: {h['install']}")
+print(f"  Switch with NEU_LLM_HARNESS=<id> in ~/.config/neu/llm.env, or in the panel menu.")
+" 2>/dev/null || echo "  ⚠️  harness detection failed (python3 missing?)"
+
+    # pi is an npm global, so it cannot ride along with the pacman list above.
+    if ! command -v pi >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
+        echo "  💡 pi adds bash and file writes behind approval cards:"
+        echo "       npm install -g $PKG_HARNESS_NPM"
     fi
 
     systemctl --user daemon-reload 2>/dev/null || true

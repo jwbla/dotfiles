@@ -34,5 +34,5 @@ return {
     speed_fast    = 2,
     speed_base    = 2,
     speed_default = 3,
-    speed_rainbow = 100,
+    speed_rainbow = 60,
 }

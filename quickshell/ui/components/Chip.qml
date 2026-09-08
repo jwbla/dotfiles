@@ -39,6 +39,9 @@ NeuSurface {
     radius: 13
     surface: mouse.containsMouse && clickable ? Theme.neuHoverHighlight
                                               : Theme.neuBgComponent
+    // A hairline of the accent on hover: the raise says "pressable", the
+    // outline says "this one".
+    outline: mouse.containsMouse && clickable ? Theme.neuAccentText : "transparent"
     opacity: dim ? 0.55 : 1
 
     onDotPulseChanged: {

@@ -28,6 +28,11 @@ BarButton {
 
     active: Notifs.centerOpen
 
+    // The right-click action is the whole reason this module needs a tooltip:
+    // nothing about a bell suggests it also silences itself.
+    tip: Notifs.dnd ? "do not disturb is on · right-click to resume"
+                    : "notifications · right-click for do not disturb"
+
     onActivated: Notifs.toggle()
     // Right-click is do-not-disturb, next to the thing it silences.
     onSecondaryActivated: Notifs.toggleDnd()

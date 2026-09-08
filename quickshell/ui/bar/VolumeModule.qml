@@ -11,6 +11,8 @@ BarButton {
     label: Sys.muted ? "muted" : Sys.volumePct + "%"
     tint: Sys.muted ? Theme.neuTextDim : Theme.neuTextMuted
 
+    tip: "scroll to change · click to mute"
+
     onActivated: Sys.toggleMute()
 
     // Scrolling up on a muted sink unmutes it. Otherwise the wheel moves a

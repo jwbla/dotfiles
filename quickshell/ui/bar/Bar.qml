@@ -27,6 +27,7 @@ PanelWindow {
 
     signal launcherRequested()
     signal controlCenterRequested()
+    signal llmRequested()
 
     Rectangle {
         anchors.fill: parent
@@ -47,8 +48,13 @@ PanelWindow {
             }
             spacing: Theme.sizeS
 
+            // The Arch logo rather than a hamburger: three stacked lines say
+            // "there is a menu here", which is the least interesting thing
+            // about this corner. The distro mark says whose desktop this is,
+            // and keeps the accent it always had.
             BarButton {
-                icon: Icons.menu
+                icon: Icons.arch
+                tip: "applications · SUPER+SPACE"
                 tint: Theme.neuAccentText
                 onActivated: root.launcherRequested()
             }
@@ -87,6 +93,12 @@ PanelWindow {
 
             BarClock {}
 
+            // The assistant, beside the bell: both are doors to a panel, and
+            // both go amber when something is waiting on you.
+            LlmModule {
+                onRequested: root.llmRequested()
+            }
+
             // The notification history, at the end of the row next to the
             // control centre -- the two "everything that happened / everything
             // you can change" panels sit together.
@@ -94,6 +106,7 @@ PanelWindow {
 
             BarButton {
                 icon: Icons.chevronDown
+                tip: "control centre · SUPER+A"
                 onActivated: root.controlCenterRequested()
             }
         }

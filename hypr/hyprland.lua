@@ -301,10 +301,6 @@ hl.bind(mainMod .. " + SHIFT + TAB", hl.dsp.exec_cmd("qs -c commandcenter ipc ca
 -- when the switcher is closed -- confirm() returns immediately.
 hl.bind(mainMod .. " + SUPER_L", hl.dsp.exec_cmd("qs -c commandcenter ipc call switcher confirm"), { release = true })
 
--- Command Center panel (tasks + time tracking + tmux projects)
--- `grave` is the bare ~ key, so no shift is needed to summon it.
-hl.bind(mainMod .. " + grave", hl.dsp.exec_cmd("qs -c commandcenter ipc call dev toggle"))
-
 -- rgtv at a glance: Prometheus alerts, Gitea PRs + CI, fleet health, Grafana
 -- links. Same quickshell instance as the Command Center, other side of the screen.
 hl.bind(mainMod .. " + R",     hl.dsp.exec_cmd("qs -c commandcenter ipc call rgtv toggle"))

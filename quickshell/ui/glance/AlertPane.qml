@@ -12,6 +12,14 @@ Section {
     readonly property var feed: Rgtv.alerts
     readonly property var down: feed.data.targets.down
 
+    // Hand a failure to the assistant as a written-but-unsent question. The
+    // fields are the ones you would have copied out by hand anyway; leaving it
+    // unsent means the click costs nothing if you already know the answer.
+    function askAbout(lines) {
+        Llm.compose("This is firing on my rgtv fleet. What should I check first?\n\n"
+                    + lines.filter(l => l).join("\n"));
+    }
+
     title: "Alerts"
     icon: "\uf0f3"
     trailing: {
@@ -32,7 +40,14 @@ Section {
         Layout.fillWidth: true
         visible: feed.loaded && !feed.data.watchdog
         highlight: true
-        onClicked: Rgtv.open(feed.data.url)
+        onClicked: root.askAbout([
+            "  alert:    Watchdog missing",
+            "  meaning:  the Prometheus -> Alertmanager -> ntfy chain is broken,",
+            "            so an empty alert list cannot be trusted",
+            "  url:      " + feed.data.url
+        ])
+        // The old behaviour, kept one button over.
+        onRightClicked: Rgtv.open(feed.data.url)
 
         RowLayout {
             anchors.fill: parent
@@ -71,7 +86,18 @@ Section {
             Layout.fillWidth: true
             implicitHeight: 50
 
-            onClicked: Rgtv.open(modelData.url)
+            onClicked: {
+                const m = alertRow.modelData;
+                root.askAbout([
+                    "  alert:    " + m.name + " (" + m.severity + ")",
+                    m.service  ? "  service:  " + m.service : "",
+                    m.instance ? "  instance: " + m.instance : "",
+                    "  firing:   " + Rgtv.ago(m.active_at),
+                    "  summary:  " + m.summary,
+                    m.description ? "  detail:   " + m.description : ""
+                ]);
+            }
+            onRightClicked: Rgtv.open(alertRow.modelData.url)
 
             ColumnLayout {
                 anchors.fill: parent
@@ -147,7 +173,12 @@ Section {
             required property var modelData
 
             Layout.fillWidth: true
-            onClicked: Rgtv.open(root.feed.data.url.replace(/\/alerts.*$/, "/targets"))
+            onClicked: root.askAbout([
+                "  problem:  Prometheus scrape target is down",
+                "  job:      " + targetRow.modelData.job,
+                "  instance: " + targetRow.modelData.instance
+            ])
+            onRightClicked: Rgtv.open(root.feed.data.url.replace(/\/alerts.*$/, "/targets"))
 
             RowLayout {
                 anchors.fill: parent

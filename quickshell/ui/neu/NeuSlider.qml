@@ -6,6 +6,8 @@ Item {
     id: root
 
     property real value: 0
+    /** How far one notch of the wheel moves the value. 5% matches the bar. */
+    property real step: 0.05
     signal moved(real v)
 
     implicitHeight: 20
@@ -48,5 +50,12 @@ Item {
         anchors.fill: parent
         onPositionChanged: (m) => { if (pressed) root.moved(Math.max(0, Math.min(1, m.x / width))); }
         onPressed: (m) => root.moved(Math.max(0, Math.min(1, m.x / width)))
+
+        // The wheel lives on the same MouseArea as the drag, not on a
+        // WheelHandler: on these layer surfaces the handler does not receive
+        // wheel events, which is what kept the bar's volume module from
+        // scrolling at all.
+        onWheel: (w) => root.moved(Math.max(0, Math.min(1,
+            root.value + (w.angleDelta.y > 0 ? root.step : -root.step))))
     }
 }

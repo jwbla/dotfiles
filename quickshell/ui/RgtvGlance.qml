@@ -8,6 +8,7 @@ import qs
 import qs.services
 import qs.ui.components
 import qs.ui.glance
+import qs.ui.neu
 
 // Slide-out RIGHT panel: the rgtv fleet at a glance — Prometheus alerts,
 // Gitea PRs with CI status, per-repo master health, fleet services with
@@ -26,7 +27,9 @@ PanelWindow {
         if (mon && mon.screen)
             root.screen = mon.screen;
 
-        Rgtv.reload();
+        // Show what we already have; only go back to the fleet if it is cold.
+        // `r` still forces a fresh round for when you know something changed.
+        Rgtv.reloadIfStale();
         shown = true;
         Rgtv.live = true;
     }
@@ -73,39 +76,40 @@ PanelWindow {
         onCleared: root.close()
     }
 
-    Rectangle {
+    // A card that floats clear of the edges, the mirror of the assistant
+    // sidebar rather than an edge-to-edge slab. The gradient stripe that used
+    // to mark the left edge went with it: an edge accent is what you reach for
+    // when a panel has no depth of its own, and this one now has relief.
+    NeuSurface {
         id: content
 
-        width: root.panelWidth
-        height: root.height
-        color: Theme.panelBg
+        readonly property int margin: Theme.shadowLGap
 
-        // Slides in from the right edge, the mirror of CommandCenter's x.
-        x: root.shown ? 0 : root.panelWidth
+        width: root.panelWidth - margin * 2
+        y: Theme.barHeight + margin
+        height: root.height - y - margin
+
+        // Off to the right by its own width plus both margins, so nothing of it
+        // is left peeking at the screen edge while closed.
+        x: root.shown ? margin : root.panelWidth + margin
         opacity: root.shown ? 1 : 0
+
+        mode: "raised"
+        tier: "xl"
+        radius: Theme.radiusL
+        surface: Theme.neuBgCard
 
         Behavior on x {
             NumberAnimation {
                 id: slide
-                duration: Theme.animDuration
+                duration: Theme.defaultMs
                 easing.type: Easing.OutCubic
             }
         }
 
         Behavior on opacity {
             NumberAnimation {
-                duration: Theme.animDuration
-            }
-        }
-
-        Rectangle {
-            anchors.left: parent.left
-            width: 2
-            height: parent.height
-            gradient: Gradient {
-                orientation: Gradient.Vertical
-                GradientStop { position: 0.0; color: Theme.primary }
-                GradientStop { position: 1.0; color: Theme.secondary }
+                duration: Theme.baseMs
             }
         }
 

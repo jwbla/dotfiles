@@ -48,9 +48,30 @@ Singleton {
         return state === "failure" || state === "error";
     }
 
+    /** How long a cached answer stays good. */
+    readonly property int staleMs: 600000   // 10 minutes
+
+    /** True once the cache has gone cold. Only meaningful while `now` ticks. */
+    readonly property bool stale: !lastChecked
+        || (now.getTime() - lastChecked.getTime()) > staleMs
+
     function reload() {
         for (const f of allFeeds)
             f.reload();
+    }
+
+    /** Reload only if the cache is cold.
+     *
+     * What the panel calls when it opens. The fleet does not change in the
+     * twenty seconds between two glances, and re-running every curl on each
+     * SUPER+R meant the panel opened empty and filled in front of you -- paying
+     * a full round of network for information it already had on screen a moment
+     * earlier. Ten minutes is the line between "this is what I just saw" and
+     * "this might have moved".
+     */
+    function reloadIfStale() {
+        if (!lastChecked || (Date.now() - lastChecked.getTime()) > staleMs)
+            reload();
     }
 
     function refresh() {
@@ -84,11 +105,13 @@ Singleton {
             f.finished.connect(() => root.lastChecked = new Date());
     }
 
+    // Was every 30s while open, which is a poll rate for something you are
+    // watching -- this is something you glance at. The cache decides the rest.
     Timer {
-        interval: 30000
+        interval: root.staleMs
         repeat: true
         running: root.live
-        onTriggered: root.refresh()
+        onTriggered: root.reload()
     }
 
     Timer {
