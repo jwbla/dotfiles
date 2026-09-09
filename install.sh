@@ -291,6 +291,17 @@ if [[ "$MODE" == "full" ]]; then
              "(template: bin/neu-llm.env.example)"
     fi
 
+    # --- neu shell: the ssh phone book -------------------------------------
+    # SUPER+P lists ~/.ssh/config; ~/.config/neu/ssh.json adds to it and can
+    # shadow it. Same arrangement as llm.env -- nothing is linked, the file is
+    # yours and stays out of this repo:
+    #   install -d -m 700 ~/.config/neu
+    #   install -m 600 bin/neu-ssh.json.example ~/.config/neu/ssh.json
+    if [[ ! -f "$HOME/.config/neu/ssh.json" ]]; then
+        echo "  ℹ️  ssh phone book (SUPER+P) is reading ~/.ssh/config only" \
+             "(add more: template bin/neu-ssh.json.example)"
+    fi
+
     # Which agent harness can answer on SUPER+I. The builtin always can; pi and
     # opencode are optional and bring bash, file writes and MCP with them, so
     # say what is here and what installing the rest would buy.

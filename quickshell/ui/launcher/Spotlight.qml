@@ -31,6 +31,7 @@ PanelWindow {
         input.text = "";
         selected = 0;
         Apps.reload();
+        Ssh.reload();
         shown = true;
         input.forceActiveFocus();
     }
@@ -61,6 +62,11 @@ PanelWindow {
             out.push({ group: "Workspaces", icon: Icons.workspace,
                        name: "Workspace " + w.name,
                        run: () => Hypr.workspace(w.id) });
+        // The ssh phone book, so SUPER+SPACE reaches a host without a second
+        // surface to learn. Same service, same launch, one list.
+        for (const h of Ssh.targets)
+            out.push({ group: "ssh", icon: Icons.addressBook, name: h.name,
+                       hint: h.detail, run: () => Ssh.connect(h) });
         for (const p of Tmux.projects)
             out.push({ group: "tmux", icon: Icons.terminal, name: p.name,
                        hint: p.running ? "running" : "",

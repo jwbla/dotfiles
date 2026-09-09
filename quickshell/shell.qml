@@ -9,6 +9,7 @@ import qs.ui.notify
 import qs.ui.switcher
 import qs.ui.dev
 import qs.ui.llm
+import qs.ui.ssh
 
 ShellRoot {
     // The bar owns the top edge; hyprland.lua no longer starts waybar.
@@ -17,6 +18,7 @@ ShellRoot {
         onLauncherRequested: spotlight.toggle()
         onControlCenterRequested: control.toggle()
         onLlmRequested: llm.toggle()
+        onSshRequested: ssh.toggle()
     }
 
     ControlCenter {
@@ -37,6 +39,11 @@ ShellRoot {
     // pointed at an OpenAI-compatible server before it can answer anything.
     LlmPanel {
         id: llm
+    }
+
+    // SUPER+P -- the ssh phone book, under its button on the left.
+    SshPanel {
+        id: ssh
     }
 
     // The notification daemon. dunst stays configured for panic mode.
@@ -207,6 +214,30 @@ ShellRoot {
         // Hold the permission gate open, or let it close again.
         function auto(on: string): void {
             Llm.autoApprove = on !== "off" && on !== "false" && on !== "0";
+        }
+    }
+
+    // Hyprland's SUPER+P bind shells out to:
+    //   qs -c commandcenter ipc call ssh toggle
+    IpcHandler {
+        target: "ssh"
+
+        function toggle(): void {
+            ssh.toggle();
+        }
+
+        function open(): void {
+            ssh.open();
+        }
+
+        function close(): void {
+            ssh.close();
+        }
+
+        // Re-read ~/.ssh/config and ~/.config/neu/ssh.json now, without opening
+        // anything -- for a script that has just written a new host in.
+        function reload(): void {
+            Ssh.reload();
         }
     }
 

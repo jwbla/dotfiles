@@ -28,6 +28,7 @@ PanelWindow {
     signal launcherRequested()
     signal controlCenterRequested()
     signal llmRequested()
+    signal sshRequested()
 
     Rectangle {
         anchors.fill: parent
@@ -59,6 +60,12 @@ PanelWindow {
                 onActivated: root.launcherRequested()
             }
 
+            // The ssh phone book, beside the shortcuts: both are "start
+            // something", and neither is status.
+            SshModule {
+                onRequested: root.sshRequested()
+            }
+
             Shortcuts {}
 
             NowPlaying {}
@@ -77,6 +84,12 @@ PanelWindow {
                 rightMargin: Theme.sizeS
             }
             spacing: Theme.sizeXs
+
+            // The two "this box is busy" modules, leftmost in a row that is
+            // anchored right: both come and go, and putting them at this end
+            // means their appearing extends the row leftwards instead of
+            // shoving the clock and the battery sideways mid-glance.
+            CiModule {}
 
             // Silent until the box is actually struggling.
             LoadModule {}

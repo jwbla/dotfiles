@@ -25,6 +25,15 @@ any_charging=false any_discharging=false all_full=true first_status=unknown
 
 for b in "$PS"/BAT*; do
     [[ -r "$b/capacity" ]] || continue
+
+    # A hot-swap pack that has been taken out can leave its sysfs node behind
+    # with present=0 -- the flagship ThinkPad's BAT1 is removable and does
+    # exactly this. Without the guard the bar grows a second, permanently empty
+    # battery icon for a battery that is sitting on a desk somewhere.
+    if [[ -r "$b/present" && "$(<"$b/present")" == 0 ]]; then
+        continue
+    fi
+
     pct=$(<"$b/capacity")
     [[ "$pct" =~ ^[0-9]+$ ]] || continue
 

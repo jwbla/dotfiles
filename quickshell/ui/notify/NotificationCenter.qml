@@ -112,6 +112,23 @@ PanelWindow {
                 NumberAnimation { id: fade; duration: Theme.baseMs }
             }
 
+            // The card swallows every click that lands on it, so that the
+            // click-away sheet underneath -- a sibling of the FocusScope, and
+            // therefore still in the delivery path -- never sees one.
+            //
+            // Without this, pressing the moon or the bin closed the panel out
+            // from under the button being pressed. A TapHandler with the default
+            // DragThreshold policy takes only a PASSIVE grab: it fires its own
+            // tapped() and lets the press carry on down the stack, where the
+            // sheet's own TapHandler took it as a click on the background. This
+            // sits below the header and the list, so those still get the press
+            // first; it only catches what they leave.
+            MouseArea {
+                anchors.fill: parent
+                acceptedButtons: Qt.AllButtons
+                onPressed: (mouse) => mouse.accepted = true
+            }
+
             ColumnLayout {
                 id: col
                 anchors.fill: parent
