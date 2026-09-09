@@ -306,7 +306,7 @@ if [[ "$MODE" == "full" ]]; then
     # opencode are optional and bring bash, file writes and MCP with them, so
     # say what is here and what installing the rest would buy.
     echo "🤖 Agent harnesses (SUPER+I):"
-    "$SCRIPT_DIR/bin/neu-llm-harness.sh" --detect | python3 -c "
+    "$SCRIPT_DIR/bin/neu-llm-harness.sh" --detect | python3 -c "$(cat <<'PY'
 import json, sys
 d = json.load(sys.stdin)
 for h in d['harnesses']:
@@ -317,8 +317,9 @@ for h in d['harnesses']:
     print(f"       {h['note']}")
     if not h['available']:
         print(f"       install: {h['install']}")
-print(f"  Switch with NEU_LLM_HARNESS=<id> in ~/.config/neu/llm.env, or in the panel menu.")
-" 2>/dev/null || echo "  ⚠️  harness detection failed (python3 missing?)"
+print("  Switch with NEU_LLM_HARNESS=<id> in ~/.config/neu/llm.env, or in the panel menu.")
+PY
+)" 2>/dev/null || echo "  ⚠️  harness detection failed (python3 missing?)"
 
     # pi is an npm global, so it cannot ride along with the pacman list above.
     if ! command -v pi >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then

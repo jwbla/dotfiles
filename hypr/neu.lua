@@ -23,8 +23,8 @@ return {
     transparent = "rgba(00000000)",
 
     rounding = 16,
-    border   = 2,
-    gaps_in  = 2,
+    border   = 1,
+    gaps_in  = 7,
     gaps_out = 15,
     shadow_range  = 6,
     shadow_offset = 3,
