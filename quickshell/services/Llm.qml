@@ -63,6 +63,13 @@ Singleton {
     // whole time loading, and silence with no explanation reads as broken.
     property bool gotToken: false
     readonly property bool warming: busy && !gotToken
+
+    // Why the silence, when the harness knows. A cold model loading is only one
+    // answer; behind the compute gateway the other is that something else holds
+    // the card, and the two look identical from here. The script asks and says
+    // so in one line -- empty whenever there is nothing to add, which is every
+    // turn against a plain endpoint.
+    property string waitNote: ""
     property string reach: "unknown"   // unknown | up | down
     property string reachNote: ""
 
@@ -105,6 +112,7 @@ Singleton {
         toolRows = ({});
         busy = true;
         gotToken = false;
+        waitNote = "";
         // Named explicitly rather than left to the remembered file, so a pick
         // made a moment ago cannot lose a race with its own --select.
         turn.command = (modelPinned && model !== "")
@@ -270,16 +278,25 @@ Singleton {
             harness = ev.harness || harness;
             reach = "up";
             break;
+        case "wait":
+            // The harness asked the gateway what is holding the card. This is
+            // not an error and does not belong in the transcript -- it is the
+            // status line's job to explain a pause and then stop mentioning it.
+            waitNote = ev.msg || "";
+            break;
         case "token":
             gotToken = true;
+            waitNote = "";
             grow("text", ev.v || "");
             break;
         case "reasoning":
             gotToken = true;
+            waitNote = "";
             grow("reasoning", ev.v || "");
             break;
         case "tool": {
             gotToken = true;
+            waitNote = "";
             // A new tool call ends the current assistant row: whatever it says
             // next is a fresh thought informed by what the tool returned.
             if (streamRow >= 0) chat.setProperty(streamRow, "done", true);

@@ -21,6 +21,9 @@ repo has to know where the model lives:
     NEU_LLM_TOOLS   1 to offer the read-only tools, 0 for plain chat (default 1)
     NEU_LLM_CTX     turns of history replayed to the model    (default 12)
     NEU_LLM_MAX_STEPS  tool round-trips allowed in one turn   (default 6)
+    NEU_LLM_TIMEOUT seconds of silence before giving up on a turn (default
+                    1200 -- see READ_TIMEOUT; a queue in front of the endpoint
+                    is silence too)
 
 WHY A TOOL LOOP HERE RATHER THAN A FRAMEWORK: the loop is thirty lines and the
 part that actually matters is the sandbox below it, which no framework would
@@ -104,8 +107,18 @@ STATE_DIR = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state"))
 # A first token can be minutes away when the server loads the model on demand,
 # so the read timeout is generous; connecting, by contrast, either works at once
 # or the box is not there.
+#
+# Behind the compute gateway it has to be more generous still, for a reason
+# that is easy to miss: its drop-in BLOCKS. It buffers the upstream answer and
+# sends the whole thing at the end, so not one byte comes down the socket until
+# the job has been through the queue AND finished generating -- and requests
+# measures a read timeout BETWEEN bytes. Against LM Studio directly that clock
+# is reset by every token and 600s means "600s of silence mid-answer"; against
+# the gateway the same number has to cover the wait and the generation
+# together. The gateway's own upstream timeout is 900s, so anything at or below
+# that here turns its answer into our timeout instead.
 CONNECT_TIMEOUT = 5
-READ_TIMEOUT = 600
+READ_TIMEOUT = int(os.environ.get("NEU_LLM_TIMEOUT", "1200"))
 
 # Caps chosen so one greedy tool call cannot blow the context window: a 20b
 # model with 8k of context has no room for a 200k file, and truncation it can
@@ -584,7 +597,78 @@ def headers() -> dict:
     h = {"Content-Type": "application/json"}
     if API_KEY:
         h["Authorization"] = f"Bearer {API_KEY}"
+    # Job declaration for the compute gateway (RGTVINFRA-K-e7c8ff). Ignored by
+    # LM Studio, so NEU_LLM_URL can point at either and this file does not
+    # branch -- which is the whole reason the gateway speaks the same protocol.
+    #
+    # INTERACTIVE is the one that matters here. This panel is bound to a
+    # keystroke, so it must never be queued behind a bake that holds the card
+    # for twenty minutes. The gateway either lets it through or refuses it
+    # quickly; what it must not do is make the user wait silently.
+    #
+    # Deliberately NO cache key: a chat turn depends on the conversation so far,
+    # so there is nothing here worth serving twice.
+    h["X-Compute-Job"] = "neu-llm.panel"
+    h["X-Compute-Interactive"] = "true"
+    h["X-Compute-Expect-Seconds"] = "30"
     return h
+
+
+# Does this endpoint have a queue in front of it? None until we have looked,
+# False for a bare LM Studio -- which 404s /v1/queue -- and True for the
+# gateway. Asked once per process: the answer cannot change under a running
+# turn, and probing before each of six tool round-trips would be five wasted
+# requests against an endpoint that has already said it has no queue.
+HAS_QUEUE: bool | None = None
+
+
+def queue_wait() -> str:
+    """Why nothing is happening yet, in one sentence, or "" to stay quiet.
+
+    The gateway's drop-in BLOCKS: it holds the connection through the queue and
+    the whole generation, then answers in one piece, so there is no position to
+    read off a response we have not received. A panel that just sits there is
+    indistinguishable from a crashed one, and GET /v1/queue -- which is not
+    itself queued -- is the only thing that can say otherwise.
+
+    Every failure here is silence, deliberately. A plain LM Studio 404s this
+    path and has to go on behaving exactly as it always did; and if the box is
+    genuinely down, the chat request a moment later says so far better than a
+    probe could.
+    """
+    global HAS_QUEUE
+    if HAS_QUEUE is False:
+        return ""
+    try:
+        r = requests.get(f"{BASE_URL}/queue", timeout=CONNECT_TIMEOUT)
+        q = r.json() if r.ok else None
+    except Exception:
+        q = None
+    if not isinstance(q, dict):
+        HAS_QUEUE = False
+        return ""
+    HAS_QUEUE = True
+
+    running = [j for j in (q.get("running") or []) if isinstance(j, dict)]
+    queued = [j for j in (q.get("queued") or []) if isinstance(j, dict)]
+    if not running:
+        return ""  # card is free; anything queued sorts behind us anyway
+
+    # What we wait for is the job HOLDING the card, not the length of the line
+    # behind it: we declare ourselves interactive, so we go to the front of the
+    # queue, but nothing interrupts work already in flight. Naming the model is
+    # the useful part -- a different one there is exactly the eviction the
+    # gateway exists to stop, and explains a slow answer even after our turn.
+    what = running[0].get("model") or running[0].get("kind") or "another job"
+
+    # The remaining time on the card is not published for a running job, but
+    # the job at the head of the queue is waiting for precisely that and its
+    # eta_seconds says so. Borrow it when there is one, and say nothing rather
+    # than guess when there is not.
+    eta = queued[0].get("eta_seconds") if queued else None
+    left = f", about {int(eta)}s left" if isinstance(eta, (int, float)) and eta > 0 else ""
+    behind = f"; {len(queued)} waiting behind it" if queued else ""
+    return f"the GPU is busy with {what}{left} -- you are next{behind}"
 
 
 MODEL_FILE = STATE_DIR / "model"
@@ -700,9 +784,27 @@ def stream_turn(model: str, messages: list[dict], stats: dict | None = None) -> 
     calls: dict[int, dict] = {}
     finish = None
 
+    # Asked BEFORE the request, because afterwards there is nothing to ask: the
+    # drop-in blocks and we would be reading the queue from inside our own wait
+    # on it. One line now is the difference between "the GPU is busy" and a
+    # panel that looks hung. Silent against anything without a queue.
+    waiting = queue_wait()
+    if waiting:
+        emit(t="wait", msg=waiting)
+
     with requests.post(f"{BASE_URL}/chat/completions", headers=headers(),
                        json=body, stream=True,
                        timeout=(CONNECT_TIMEOUT, READ_TIMEOUT)) as resp:
+        if resp.status_code in (429, 503):
+            # NOT "the GPU is busy". The gateway never refuses for that -- it
+            # queues, which is the whole point of it, and being busy is what
+            # the wait line above reports. 429/503 here means the endpoint
+            # itself is unwilling: a gateway shutting down, or a hosted
+            # OpenAI-compatible server rate-limiting us. Say the true thing.
+            raise RuntimeError(
+                f"{BASE_URL} is not taking requests right now "
+                f"({resp.status_code}) -- try again shortly"
+            )
         if resp.status_code >= 400:
             raise RuntimeError(f"{resp.status_code} {resp.text[:300]}")
         # requests falls back to ISO-8859-1 for any text/* without an explicit

@@ -20,7 +20,12 @@ PanelWindow {
 
     property bool shown: false
 
-    readonly property int panelWidth: 600
+    // Every row in here is one elided line: PR title, alert summary, service
+    // name. Width is read straight off as visible characters, and 600 left a
+    // title only about fifty of them once the repo#number and the timestamp
+    // had taken their share. 900 still sits under half of a 1920-wide display,
+    // which is what this runs on.
+    readonly property int panelWidth: 900
 
     function open() {
         const mon = Hyprland.focusedMonitor;

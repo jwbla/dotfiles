@@ -100,16 +100,48 @@ def remembered_model() -> str:
         return ""
 
 
-def loaded_model() -> str:
-    """Whatever the endpoint currently holds, which outranks a stale memory."""
+def endpoint_models() -> list[dict] | None:
+    """What the endpoint will answer about, or None if it is not answering.
+
+    Two paths, because /api/v0/models is LM STUDIO's own and not part of the
+    OpenAI protocol. It is worth asking for first -- it is the only one that
+    says which model is RESIDENT, and that is the difference between an answer
+    in two seconds and a minute of just-in-time loading a 120b -- but anything
+    else on the far end returns a 404 there.
+
+    The compute gateway is exactly that anything else: it forwards /v1/models
+    and nothing more. Falling through to the OpenAI path costs the `state`
+    column and keeps the picker working, where treating the 404 as an answer
+    declared a perfectly healthy endpoint dead.
+    """
+    import requests
     try:
-        import requests
         r = requests.get(f"{BASE_URL.rsplit('/v1', 1)[0]}/api/v0/models", timeout=5)
-        for m in r.json().get("data", []):
-            if m.get("state") in ("loaded", "loading") and m.get("type") in ("llm", "vlm"):
-                return m["id"]
+        if r.ok:
+            found = [{"id": m["id"], "type": m.get("type", "llm"),
+                      "state": m.get("state", ""),
+                      "ctx": m.get("max_context_length", 0)}
+                     for m in r.json().get("data", [])
+                     if m.get("type") in ("llm", "vlm")]
+            if found:
+                return found
     except Exception:
         pass
+
+    try:
+        r = requests.get(f"{BASE_URL}/models", timeout=5)
+        r.raise_for_status()
+        return [{"id": m.get("id", ""), "type": "llm", "state": "", "ctx": 0}
+                for m in (r.json().get("data") or [])]
+    except Exception:
+        return None
+
+
+def loaded_model() -> str:
+    """Whatever the endpoint currently holds, which outranks a stale memory."""
+    for m in endpoint_models() or []:
+        if m["state"] in ("loaded", "loading"):
+            return m["id"]
     return ""
 
 
@@ -339,15 +371,10 @@ def main() -> int:
     if args.probe:
         # The model list is the endpoint's, not pi's: it is the same box either
         # way, and asking it directly is instant where starting pi is not.
-        try:
-            import requests
-            r = requests.get(f"{BASE_URL.rsplit('/v1', 1)[0]}/api/v0/models", timeout=5)
-            models = [{"id": m["id"], "type": m.get("type", "llm"),
-                       "state": m.get("state", ""), "ctx": m.get("max_context_length", 0)}
-                      for m in r.json().get("data", [])
-                      if m.get("type") in ("llm", "vlm")]
-        except Exception as exc:
-            emit(t="probe", ok=False, endpoint=BASE_URL, msg=str(exc)[:90])
+        models = endpoint_models()
+        if models is None:
+            emit(t="probe", ok=False, endpoint=BASE_URL,
+                 msg=f"no model list from {BASE_URL} -- is the server up?")
             return 1
         hot = next((m["id"] for m in models if m["state"] in ("loaded", "loading")), "")
         emit(t="probe", ok=True, endpoint=BASE_URL, harness="pi",

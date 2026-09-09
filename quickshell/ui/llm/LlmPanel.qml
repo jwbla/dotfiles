@@ -119,7 +119,11 @@ PanelWindow {
 
         readonly property int margin: Theme.shadowLGap
 
-        width: Math.min(460, root.width * 0.34)
+        // 690 leaves ~95 monospace columns inside a code block against ~59 at
+        // the old 460, so a pasted 80-column diff no longer has to be scrolled
+        // sideways to be read. The fraction is only the narrow-screen guard it
+        // always was: below ~1380px the panel takes half the display instead.
+        width: Math.min(690, root.width * 0.5)
         y: Theme.barHeight + margin
         height: root.height - y - margin
 
@@ -473,7 +477,13 @@ PanelWindow {
 
                 Text {
                     Layout.fillWidth: true
+                    // A specific reason outranks the generic guess. "a cold
+                    // model loads first" is only ever the SECOND most likely
+                    // explanation for a pause once there is a queue in front of
+                    // the card, and being told the wrong reason is worse than
+                    // being told nothing.
                     text: Llm.autoApprove ? "every request is granted"
+                         : (Llm.busy && Llm.waitNote !== "") ? Llm.waitNote
                          : Llm.warming ? "waiting — a cold model loads first"
                          : Llm.busy ? "streaming — esc closes, the turn keeps going"
                                     : "enter sends · shift+enter newline"
