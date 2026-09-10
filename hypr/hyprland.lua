@@ -62,12 +62,11 @@ end)
 -------------------------------
 
 hl.env("XCURSOR_SIZE", "36")
-hl.env("HYPRCURSOR_SIZE", "36")
--- The generated neu cursor. XCURSOR_THEME covers XWayland/GTK/Qt;
--- HYPRCURSOR_THEME is Hyprland's own native path. Same name, different roots
--- (~/.icons vs ~/.local/share/icons) -- see CURSOR_NEU.md.
-hl.env("XCURSOR_THEME", "neu")
-hl.env("HYPRCURSOR_THEME", "neu")
+-- Stock Adwaita. The hand-drawn neu cursor was dropped: 11 shapes fanned out to
+-- 135 committed build files, which is not a trade worth making for a pointer.
+-- No HYPRCURSOR_THEME on purpose -- Adwaita ships no hyprcursors/ directory, and
+-- Hyprland falls back to Xcursor when the native theme is absent.
+hl.env("XCURSOR_THEME", "Adwaita")
 
 -- Force Qt/KDE apps to use qt6ct (dark palette configured in ~/.config/qt6ct)
 hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")

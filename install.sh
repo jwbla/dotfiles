@@ -101,10 +101,10 @@ PKGS_CLI_BREW=(zsh tmux starship atuin jq fzf eza zoxide neovim git)
 #   qt6-5compat    Qt5Compat.GraphicalEffects -> NeuSurface's inset shadows
 #   qt6-declarative QtQuick.Effects.RectangularShadow -> the raised pair
 #   ttf-ubuntu-mono-nerd  every icon in the bar, spotlight and prompt
-#   librsvg/ffmpeg  theme/gen.py rasterises the wallpaper and the cursor
+#   librsvg/ffmpeg  theme/gen.py rasterises the wallpaper
 #   libpulse/iw     bin/neu_sysinfo.sh reads volume and wifi through these
 PKGS_DESKTOP_ARCH=(
-    hyprland hyprpaper hypridle hyprlock hyprcursor
+    hyprland hyprpaper hypridle hyprlock
     quickshell qt6-declarative qt6-5compat qt6ct
     ttf-ubuntu-mono-nerd adwaita-fonts breeze-icons
     libpulse iw jq python librsvg ffmpeg libnotify
@@ -329,13 +329,6 @@ PY
 
     systemctl --user daemon-reload 2>/dev/null || true
 
-    # Cursor. Two themes, both called `neu`, in separate roots on purpose:
-    # they must not share a cursors/ directory or Xcursor would try to parse
-    # hyprcursor's .hlc files. Build them with:
-    #   python3 theme/cursor/gen_cursor.py
-    echo "🖱️  Linking neu cursor..."
-    link theme/cursor/build/xcursor/neu "$HOME/.icons/neu"
-    link theme/cursor/build/hypr/neu    "$HOME/.local/share/icons/neu"
     for f in "$SCRIPT_DIR"/tms_projects/*.conf; do
         link "tms_projects/$(basename "$f")" "$HOME/.config/tms/projects/$(basename "$f")"
     done
@@ -357,13 +350,6 @@ if [[ "$MODE" == "full" && "$GENERATE" == "1" ]] && command -v python3 >/dev/nul
             python3 "$SCRIPT_DIR/theme/gen.py" | sed 's/^/  /' || \
                 echo "  ⚠️  theme/gen.py failed; the linked configs may carry another machine's paths"
         fi
-    fi
-
-    # The cursor is a build artifact; without it the two icon links dangle.
-    if [[ ! -d "$SCRIPT_DIR/theme/cursor/build/xcursor/neu" ]]; then
-        echo "🖱️  Building the neu cursor..."
-        python3 "$SCRIPT_DIR/theme/cursor/gen_cursor.py" | tail -2 | sed 's/^/  /' || \
-            echo "  ⚠️  cursor build failed (needs rsvg-convert + ffmpeg)"
     fi
 fi
 
