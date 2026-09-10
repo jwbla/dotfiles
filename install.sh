@@ -66,7 +66,12 @@ esac
 if [[ -z "$MODE" ]]; then
     if [[ "$OS" != "linux" ]]; then
         MODE=minimal
-    elif [[ "${CODER:-}" == "true" || -n "${CODER_AGENT_URL:-}" || "$SCRIPT_DIR" == */coderv2/dotfiles* ]]; then
+    # CODER_AGENT_TOKEN is the one the Coder template actually exports; CODER and
+    # CODER_AGENT_URL are not set in a startup_script, and the checkout is not
+    # under coderv2/ when workspace-init clones it to ~/dev. Missing all of them
+    # is how a workspace silently came up in full mode.
+    elif [[ -n "${CODER_AGENT_TOKEN:-}" || "${CODER:-}" == "true" \
+            || -n "${CODER_AGENT_URL:-}" || "$SCRIPT_DIR" == */coderv2/dotfiles* ]]; then
         MODE=minimal
     else
         MODE=full
@@ -104,74 +109,134 @@ link() {
 }
 
 # ---------------------------------------------------------------- packages --
-# Only what this repo's configs actually invoke is listed -- if nothing here
-# shells out to it, it does not belong.
-PKGS_CLI_ARCH=(zsh tmux starship atuin jq fzf eza zoxide neovim git)
-PKGS_CLI_BREW=(zsh tmux starship atuin jq fzf eza zoxide neovim git)
+# One canonical list (Arch names), plus per-manager overrides. Three parallel
+# arrays duplicated nine identical strings at two managers and would not survive
+# a third.
+#
+# Package name and proving binary are DIFFERENT axES, which is why PKG_BIN
+# exists: neovim's binary is `nvim`, so a `command -v neovim` check never fires
+# and the installer would happily apt-install a downgrade over a newer build.
+PKGS_CLI=(zsh tmux starship atuin jq fzf eza zoxide neovim git)
 
 # Terminals, on a Linux desktop only. The configs are linked either way; these
 # are what reads them.
-PKGS_TERM_ARCH=(ghostty kitty)
+PKGS_TERM=(ghostty kitty)
 
-missing_pkgs() {
+# "<mgr>:<canonical>" -> the name there. Absent means "spelled the same".
+# "-" means NOT PACKAGED HERE, and PKG_BOOT below is how it actually arrives.
+declare -A PKG_ALIAS=(
+    [apt:starship]=-        # not in the Ubuntu archive at all
+    [apt:atuin]=-           # ditto
+    [apt:neovim]=-          # 24.04 ships 0.9.5; treat as unpackaged rather than
+                            # downgrade a newer /usr/local build
+    [brew:timew]=timewarrior
+)
+
+# What proves the need is already met, when it is not the package name.
+declare -A PKG_BIN=([neovim]=nvim)
+
+# How a "-" package arrives instead. These land in $HOME, which is the half that
+# survives a container being recreated, so they are worth running unconditionally.
+declare -A PKG_BOOT=([starship]=bootstrap_starship [atuin]=bootstrap_atuin)
+
+# Prompt-freeness has to be structural: this script runs unattended on every
+# workspace start, and a sudo password prompt there hangs the boot forever.
+setup_sudo() {
+    SUDO=""
+    (( EUID == 0 )) && return 0
+    if sudo -n true 2>/dev/null; then
+        SUDO="sudo -n"
+    elif [[ -t 0 ]]; then
+        SUDO="sudo"
+    else
+        echo "📦 No passwordless sudo and no terminal; reporting only."
+        PACKAGES=0
+    fi
+}
+
+pkg_for() {  # <mgr> <canonical> -> name there, or "-"
+    local key="$1:$2"
+    printf '%s' "${PKG_ALIAS[$key]-$2}"
+}
+
+pkg_installed() {  # <mgr> <name>
+    case "$1" in
+        pacman) pacman -Qq "$2" &>/dev/null ;;
+        apt)    [[ "$(dpkg-query -W -f='${db:Status-Status}' "$2" 2>/dev/null)" == installed ]] ;;
+        brew)   brew list --versions "$2" &>/dev/null ;;
+    esac
+}
+
+# Splits a canonical list three ways: MISS (installable by $PKG_MGR), BOOT
+# (unpackaged here but with a handler), UNAVAIL (unpackaged, no handler -- say so
+# and move on).
+MISS=() BOOT=() UNAVAIL=()
+triage() {
     local -n _list=$1
-    local out=() p
-    for p in "${_list[@]}"; do
-        case "$PKG_MGR" in
-            pacman) pacman -Qq "$p" &>/dev/null && continue ;;
-            brew)   brew list --versions "$p" &>/dev/null && continue ;;
-        esac
-        # A same-named binary already on PATH means the need is met however it
-        # got there -- starship and atuin arrive via the bootstrap below, and
-        # zoxide/eza are often cargo-installed.
-        command -v "$p" >/dev/null 2>&1 && continue
-        out+=("$p")
+    local c name
+    for c in "${_list[@]}"; do
+        # A binary already on PATH means the need is met however it got there --
+        # starship and atuin arrive via bootstrap, zoxide/eza are often cargo.
+        command -v "${PKG_BIN[$c]-$c}" >/dev/null 2>&1 && continue
+        name="$(pkg_for "$PKG_MGR" "$c")"
+        if [[ "$name" == "-" ]]; then
+            if [[ -n "${PKG_BOOT[$c]-}" ]]; then BOOT+=("$c"); else UNAVAIL+=("$c"); fi
+            continue
+        fi
+        pkg_installed "$PKG_MGR" "$name" && continue
+        MISS+=("$name")
     done
-    printf '%s\n' "${out[@]:-}"
 }
 
 do_packages() {
     PKG_MGR=""
-    command -v pacman >/dev/null 2>&1 && PKG_MGR=pacman
-    [[ -z "$PKG_MGR" ]] && command -v brew >/dev/null 2>&1 && PKG_MGR=brew
-    if [[ -z "$PKG_MGR" ]]; then
-        echo "📦 No pacman or brew found; skipping the package check."
+    if command -v pacman  >/dev/null 2>&1; then PKG_MGR=pacman
+    elif command -v apt-get >/dev/null 2>&1; then PKG_MGR=apt
+    elif command -v brew    >/dev/null 2>&1; then PKG_MGR=brew
+    else
+        echo "📦 No pacman, apt or brew found; skipping the package check."
         return 0
     fi
+    setup_sudo
 
-    local want=()
-    if [[ "$PKG_MGR" == "pacman" ]]; then
-        want+=("${PKGS_CLI_ARCH[@]}")
-        [[ "$MODE" == "full" ]] && want+=("${PKGS_TERM_ARCH[@]}")
-    else
-        want+=("${PKGS_CLI_BREW[@]}")
-    fi
+    local want=("${PKGS_CLI[@]}")
+    [[ "$MODE" == "full" ]] && want+=("${PKGS_TERM[@]}")
+    triage want
 
-    local miss
-    mapfile -t miss < <(missing_pkgs want)
-    # mapfile on empty input still yields one empty element
-    [[ ${#miss[@]} -eq 1 && -z "${miss[0]}" ]] && miss=()
+    (( ${#UNAVAIL[@]} )) && \
+        echo "📦 Not packaged for $PKG_MGR, skipping: ${UNAVAIL[*]}"
 
-    if [[ ${#miss[@]} -eq 0 ]]; then
+    if (( ${#MISS[@]} == 0 )); then
         echo "📦 All packages present."
         return 0
     fi
 
-    if (( PACKAGES )); then
-        echo "📦 Installing ${#miss[@]} missing package(s) with $PKG_MGR..."
-        case "$PKG_MGR" in
-            # Not --noconfirm: this is the one step that touches the system
-            # outside $HOME, so it should be seen before it happens.
-            pacman) sudo pacman -S --needed "${miss[@]}" ;;
-            brew)   brew install "${miss[@]}" ;;
-        esac
-    else
-        echo "📦 Missing ${#miss[@]} package(s): ${miss[*]}"
-        case "$PKG_MGR" in
-            pacman) echo "   install with: $0 --packages   (or: sudo pacman -S --needed ${miss[*]})" ;;
-            brew)   echo "   install with: $0 --packages   (or: brew install ${miss[*]})" ;;
-        esac
+    if (( ! PACKAGES )); then
+        echo "📦 Missing ${#MISS[@]} package(s): ${MISS[*]}"
+        echo "   install with: $0 --packages"
+        return 0
     fi
+
+    echo "📦 Installing ${#MISS[@]} missing package(s) with $PKG_MGR..."
+    case "$PKG_MGR" in
+        # Not --noconfirm interactively: this is the one step that touches the
+        # system outside $HOME, so it should be seen before it happens. Headless
+        # there is nobody to see it, and a prompt would hang the boot.
+        pacman)
+            if [[ -t 0 ]]; then $SUDO pacman -S --needed "${MISS[@]}"
+            else               $SUDO pacman -S --needed --noconfirm "${MISS[@]}"; fi ;;
+        # The image layers end with `rm -rf /var/lib/apt/lists/*`, so an update is
+        # mandatory or every name is "unable to locate". Gated on there being
+        # something to install, so the steady state costs nothing. The lock
+        # timeout matters: a blocked apt on a startup script hangs it forever.
+        # DEBIAN_FRONTEND must be inside env, since sudo resets the environment.
+        apt)
+            $SUDO env DEBIAN_FRONTEND=noninteractive \
+                apt-get -o DPkg::Lock::Timeout=60 update -qq
+            $SUDO env DEBIAN_FRONTEND=noninteractive \
+                apt-get -o DPkg::Lock::Timeout=60 install -y --no-install-recommends "${MISS[@]}" ;;
+        brew) brew install "${MISS[@]}" ;;
+    esac
 }
 
 do_packages
@@ -212,8 +277,13 @@ fi
 # --- Bootstrap ---------------------------------------------------------------
 # Best-effort: a workspace must still start with no network, so every step warns
 # and moves on instead of failing the script. Runs after linking so configs land
-# even offline. starship and TPM are not packaged everywhere, which is exactly
-# why they are fetched here rather than listed above.
+# even offline.
+#
+# These are the tools no package manager here carries (PKG_BOOT above names
+# them). They install into $HOME rather than /usr, which is what makes them worth
+# doing on every run: a Coder workspace container is destroyed and recreated on
+# every start, and only /home survives -- so a $HOME install is paid once where
+# an apt install is paid forever.
 
 bootstrap_starship() {
     if command -v starship >/dev/null 2>&1 || [[ -x "$HOME/.local/bin/starship" ]]; then
@@ -227,6 +297,24 @@ bootstrap_starship() {
     fi
 }
 
+bootstrap_atuin() {
+    if command -v atuin >/dev/null 2>&1 || [[ -x "$HOME/.atuin/bin/atuin" ]]; then
+        return 0
+    fi
+    if curl -LsSf https://setup.atuin.sh | sh; then
+        echo "  ✅ atuin installed to ~/.atuin/bin"
+        # The history db is useless without a key, and `atuin init` exits 1
+        # without one -- which silently costs you Ctrl+R on every new shell.
+        # See the atuin section of the README.
+        if [[ ! -f "$HOME/.local/share/atuin/key" ]]; then
+            echo "  ℹ️  no atuin key yet; Ctrl+R falls back to zsh until you make one:"
+            echo "       openssl rand 32 | base64 -w0 > ~/.local/share/atuin/key"
+        fi
+    else
+        echo "  ⚠️  atuin install failed"
+    fi
+}
+
 bootstrap_tpm() {
     if [[ -d "$HOME/.tmux/plugins/tpm" ]]; then
         return 0
@@ -235,19 +323,30 @@ bootstrap_tpm() {
         echo "  ⚠️  git missing; skipping TPM"
         return 0
     fi
-    if git clone --depth 1 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"; then
-        if command -v tmux >/dev/null 2>&1; then
-            "$HOME/.tmux/plugins/tpm/bin/install_plugins" || true
-        fi
-        echo "  ✅ TPM installed"
-    else
+    if ! git clone --depth 1 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"; then
         echo "  ⚠️  TPM clone failed"
+        return 0
+    fi
+    # install_plugins needs a live server that has sourced the conf; without one
+    # it exits having done nothing. Spin a throwaway detached session for it and
+    # kill only that session, so a restored resurrect/continuum session is safe.
+    if [[ -x "$HOME/.tmux/plugins/tpm/bin/install_plugins" ]] && command -v tmux >/dev/null 2>&1; then
+        tmux new-session -d -s _tpm_install 2>/dev/null || true
+        "$HOME/.tmux/plugins/tpm/bin/install_plugins" >/dev/null 2>&1 \
+            && echo "  ✅ TPM installed, plugins synced" \
+            || echo "  ✅ TPM installed (run prefix+I inside tmux for plugins)"
+        tmux kill-session -t _tpm_install 2>/dev/null || true
+    else
+        echo "  ✅ TPM installed"
     fi
 }
 
-if [[ "$MODE" == "minimal" && "$BOOTSTRAP" == "1" ]]; then
+# Unconditional, not minimal-only: the desktop needs starship and atuin exactly
+# as much as a workspace does, and each function is a no-op once satisfied.
+if (( BOOTSTRAP )); then
     echo "🛠️  Bootstrapping tools (best-effort)..."
     bootstrap_starship || echo "  ⚠️  starship bootstrap failed"
+    bootstrap_atuin    || echo "  ⚠️  atuin bootstrap failed"
     bootstrap_tpm      || echo "  ⚠️  TPM bootstrap failed"
 fi
 
