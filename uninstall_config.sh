@@ -1,17 +1,50 @@
 #!/usr/bin/env bash
 # Removes every symlink that points into this repo and restores any
 # <file>.predotfiles backups the installer made.
+#
+# The rgtv dotfiles install ON TOP of these, so teardown runs in the reverse
+# order of install: this script refuses to start while that half is still
+# installed, because removing the base leaves its overrides -- ~/.tmux-neu.conf,
+# kitty's neu.conf, the systemd units -- pointing at a setup whose other half is
+# gone. --force says do it anyway.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+STAMP_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles"
 
 ASSUME_YES=0
+FORCE=0
 for arg in "$@"; do
     case "$arg" in
         -y|--yes) ASSUME_YES=1 ;;
-        *) echo "usage: $0 [-y|--yes]" >&2; exit 2 ;;
+        --force) FORCE=1 ;;
+        *) echo "usage: $0 [-y|--yes] [--force]" >&2; exit 2 ;;
     esac
 done
+
+read_stamp() {
+    [[ -f "$STAMP_DIR/$1.stamp" ]] || return 1
+    sed -n "s/^$2=//p" "$STAMP_DIR/$1.stamp"
+}
+
+# A stamp is only believed while the checkout it names still exists -- a deleted
+# repo must not be able to block this one forever.
+peer_installed() {
+    local repo
+    repo="$(read_stamp "$1" repo)" || return 1
+    [[ -n "$repo" && -d "$repo/.git" ]]
+}
+
+if peer_installed rgtv; then
+    rgtv_repo="$(read_stamp rgtv repo)"
+    echo "⚠️  The rgtv dotfiles are installed on top of these ($rgtv_repo)." >&2
+    echo "   Uninstall them first:  $rgtv_repo/uninstall_config.sh" >&2
+    if (( ! FORCE )); then
+        echo "   (or re-run with --force to remove this half anyway)" >&2
+        exit 1
+    fi
+    echo "   --force given; continuing and leaving the rgtv links dangling." >&2
+fi
 
 echo "⚠️  This will remove all symlinks pointing into $SCRIPT_DIR."
 if (( ! ASSUME_YES )); then
@@ -32,28 +65,11 @@ SCAN_DIRS=(
     "$HOME/.local/bin"
     "$HOME/.config"
     "$HOME/.config/atuin"
-    "$HOME/.config/hypr"
-    "$HOME/.config/waybar"
-    "$HOME/.config/quickshell"
-    "$HOME/.config/kitty"
-    "$HOME/.config/alacritty"
-    "$HOME/.config/wofi"
-    "$HOME/.config/ghostty"
-    "$HOME/.config/dunst"
     "$HOME/.config/tms"
     "$HOME/.config/tms/projects"
-    "$HOME/.newsboat"
-    # neu theme
-    "$HOME/.config/ghostty/themes"
-    "$HOME/.config/gtk-3.0"
-    "$HOME/.config/gtk-4.0"
-    "$HOME/.config/qt6ct"
-    "$HOME/.config/qt6ct/colors"
-    "$HOME/.icons"
-    "$HOME/.local/share/icons"
-    "$HOME/.local/share/color-schemes"
-    "$HOME/.config/systemd/user"
-    "$HOME/.config/systemd/user/xdg-desktop-autostart.target.d"
+    "$HOME/.config/kitty"
+    "$HOME/.config/alacritty"
+    "$HOME/.config/ghostty"
 )
 
 remove_repo_links() {
@@ -85,21 +101,15 @@ for dir in \
     "$HOME/.config/tms/projects" \
     "$HOME/.config/tms" \
     "$HOME/.config/atuin" \
-    "$HOME/.config/hypr" \
-    "$HOME/.config/waybar" \
     "$HOME/.config/kitty" \
     "$HOME/.config/alacritty" \
-    "$HOME/.config/wofi" \
-    "$HOME/.config/ghostty" \
-    "$HOME/.config/dunst" \
-    "$HOME/.config/ghostty/themes" \
-    "$HOME/.config/qt6ct/colors" \
-    "$HOME/.icons" \
-    "$HOME/.newsboat"
+    "$HOME/.config/ghostty"
 do
     if [[ -d "$dir" ]]; then
         rmdir --ignore-fail-on-non-empty "$dir"
     fi
 done
+
+rm -f "$STAMP_DIR/personal.stamp"
 
 echo "✅ Config uninstallation complete."

@@ -1,7 +1,17 @@
 # .files
 
-Personal dotfiles, installed as symlinks by `install.sh`. No stow or other
-dependencies — plain `ln`.
+Portable dotfiles — zsh, tmux, atuin, the tms session manager, and the base
+terminal configs. Installed as symlinks by `install.sh`. No stow or other
+dependencies, plain `ln`.
+
+These run everywhere: the Arch desktop, a Mac, a Coder workspace. Nothing here
+needs a display server, and nothing here depends on the repo below.
+
+> **The desktop is a separate repo.** Hyprland, the quickshell *neu* shell, the
+> theme and the fleet tools live in `gitea.i.realgamers.tv/jwbla/dotfiles`, which
+> installs *on top* of this one. It overrides the palettes here through optional
+> includes, so a machine with only this repo is a complete, working setup and a
+> machine with both reverts cleanly by uninstalling that one.
 
 ```sh
 ./install.sh              # auto: full on a Linux desktop, minimal on macOS / Coder
@@ -10,23 +20,21 @@ dependencies — plain `ln`.
 ./install.sh --help
 ```
 
-`--full` is Linux-only and is refused elsewhere, so running this on the Mac will
-not scatter `~/.config/hypr` and friends into a home that cannot use them.
-Packages are never installed without `--packages`; otherwise the script just
-reports what is missing.
+`--full` is Linux-only and is refused elsewhere. Packages are never installed
+without `--packages`; otherwise the script just reports what is missing.
 
 ## Install
 
-### Desktop (Arch/Hyprland)
+### Desktop (Linux)
 
 ```
 ./install.sh
 ```
 
-Links everything: zsh, tmux, starship, git aliases, plus hyprland, waybar,
-wofi, dunst, kitty/alacritty/ghostty, newsboat, and tms project configs.
-Utility scripts in `bin/` are linked into `~/.local/bin`, so nothing depends
-on where this repo is cloned.
+Links zsh, tmux, starship, atuin, git aliases and the tms project configs,
+plus — on a Linux desktop — the kitty/alacritty/ghostty configs and the
+scripts in `bin/`, which go into `~/.local/bin` so nothing depends on where
+this repo is cloned.
 
 ### Coder workspaces
 
@@ -85,59 +93,7 @@ The zshrc degrades gracefully when tools are missing, but expects:
 - **core**: zsh, tmux, starship, fzf
 - **nice to have**: eza (`l`/`lt`), bat (`inv` preview), zoxide, git-delta,
   television (`tv`), atuin (Ctrl+R / Up history search — see below)
-- **desktop**: hyprland, waybar, wofi, dunst, newsboat, taskwarrior (motd),
-  ghostty/kitty/alacritty
-- **quickshell**: the whole desktop shell — bar, Spotlight (`SUPER+SPACE`),
-  notifications, Control Center, plus the Command Center panel on `SUPER+A` and
-  the rgtv glance on `SUPER+R`. Needs taskwarrior + timewarrior.
-- **theme**: the desktop wears `@rgtv/neu` (see `NEU_THEME.md`). One source of
-  truth in `theme/tokens.json`; `python3 theme/gen.py` regenerates every themed
-  config. **Read `NEU_THEME.md` §5 before a test drive — it is how you back out.**
-  timewarrior. Without it that bind does nothing; `SUPER+A` still opens the
-  wofi tmux picker.
-- **rgtv glance** (`SUPER+R`, same quickshell instance): the rgtv fleet at a
-  glance — firing Prometheus alerts, open Gitea PRs with their CI state,
-  whether every repo's master is green, fleet services with the homepage's
-  health probe, and Grafana dashboards. Everything is a clickable link;
-  right-click on a PR or repo jumps to CI. Data comes from
-  `bin/rgtv_glance.sh` (curl + jq against the LAN; the Gitea token is read
-  from `tea`'s login, so `tea login add` once for gitea.i.realgamers.tv).
-  Re-polls every 30s while open; `qs -c commandcenter ipc call rgtv refresh`
-  forces one from a script.
-- **LLM sidebar** (`SUPER+I`, same quickshell instance): a chat panel on the
-  left edge talking to a local OpenAI-compatible server -- LM Studio,
-  `llama-server`, ollama -- named in `~/.config/neu/llm.env` (template:
-  `bin/neu-llm.env.example`). Nothing leaves the LAN. The panel picks the model
-  from a menu in its header, which also picks the **harness** answering behind
-  it -- `bin/neu-llm-harness.sh --detect` lists what is installed:
-
-  | harness | tools | notes |
-  |---|---|---|
-  | `builtin` (default) | read-only, plus a sandboxed `write_file` | `bin/neu-llm.py`. ~200-token system prompt, so it works in a 4k context |
-  | `pi` | read / write / edit / **bash** | `npm i -g @earendil-works/pi-coding-agent`; its confirm dialogs become the panel's approval cards |
-  | `opencode` | full agent, MCP servers | `pacman -S opencode`; its permission API drives the same cards |
-
-  A harness with a real system prompt needs ~10k tokens before you type a word,
-  so **load the model with a large context** or only the builtin will run --
-  LM Studio defaults to 4096 and fails with `n_keep >= n_ctx`.
-
-  The builtin's rails: reads are confined to `NEU_LLM_ROOTS`
-  (`~/dev:~/.config`) with keys, `*.env` and the rest of the deny list refused
-  inside them; writes land unasked only under `~/dev/llm-scratch`, and anywhere
-  else raises an approval card with a diff that blocks the turn until you
-  answer (`ipc call llm approve` / `deny` does it from a script or keybind).
-  Silence for 180s counts as no. Every call, and every verdict, lands in
-  `~/.local/state/neu/llm/tools.log`.
-
-  All three speak one NDJSON protocol, so each is worth running by hand:
-
-  ```
-  neu-llm-harness.sh --detect              # which harnesses exist here
-  neu-llm.py --probe                       # is the endpoint there, what is loaded
-  echo 'what changed in this repo?' | neu-llm.py --stdin
-  qs -c commandcenter ipc call llm ask "why is neu-ntfy restarting?"
-  ```
-
+- **desktop**: ghostty/kitty/alacritty
 ## atuin
 
 Shell history lives in atuin's SQLite db (`~/.local/share/atuin/history.db`)

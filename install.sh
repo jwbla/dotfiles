@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
-# Runs on three kinds of machine and must be idempotent and prompt-free on all of
-# them, because Coder workspaces clone this repo (to ~/.config/coderv2/dotfiles)
-# and run it non-interactively on every workspace start.
+# Portable dotfiles: zsh, tmux, atuin, the tms session manager, and the base
+# terminal configs. Runs on every machine the operator touches -- the Arch
+# desktop, a Mac, a Coder workspace -- and must be idempotent and prompt-free on
+# all of them, because workspaces run it non-interactively on every start.
 #
-#   minimal   portable CLI only -- zsh, tmux, starship, atuin, tms.
-#             macOS and Coder workspaces get this: none of the rest applies.
-#   full      minimal + the Linux desktop (hyprland, quickshell, the neu theme,
-#             terminals, GTK/Qt). Linux only.
+#   minimal   the portable CLI. macOS and Coder workspaces get this.
+#   full      minimal + the GUI terminal configs and the laptop scripts.
+#             Linux only.
+#
+# THE DESKTOP IS A SEPARATE REPO. Hyprland, the quickshell "neu" shell, the
+# theme and the fleet tools live in gitea.i.realgamers.tv/jwbla/dotfiles, which
+# installs ON TOP of this one and overrides the palettes here. Nothing in this
+# repo depends on that one: every seam it uses is an optional include, so a
+# machine with only this repo is a complete, working setup.
 #
 # Package installation is OPT-IN (`--packages`). Without it the script only
 # reports what is missing, so a workspace start never blocks on a package
@@ -15,23 +21,36 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# ------------------------------------------------------------------ stamps --
+# Both dotfiles repos drop a stamp so each can see the other. State, not config:
+# nothing here is worth backing up, and a stale stamp must never outlive the
+# checkout it names.
+STAMP_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles"
+
+write_stamp() {
+    mkdir -p "$STAMP_DIR"
+    { echo "repo=$SCRIPT_DIR"
+      echo "commit=$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+      echo "mode=$MODE"
+      echo "installed=$(date -Is)"
+    } > "$STAMP_DIR/$1.stamp"
+}
+
 MODE=""
 BOOTSTRAP=1
 PACKAGES=0
-GENERATE=1
 for arg in "$@"; do
     case "$arg" in
         --minimal) MODE=minimal ;;
         --full) MODE=full ;;
         --no-bootstrap) BOOTSTRAP=0 ;;
         --packages) PACKAGES=1 ;;
-        --no-generate) GENERATE=0 ;;
         -h|--help)
             awk 'NR>1 && /^#/ { sub(/^# ?/, ""); print; next } NR>1 { exit }' "$0"
             echo
-            echo "usage: $0 [--minimal|--full] [--packages] [--no-generate] [--no-bootstrap]"
+            echo "usage: $0 [--minimal|--full] [--packages] [--no-bootstrap]"
             exit 0 ;;
-        *) echo "usage: $0 [--minimal|--full] [--packages] [--no-generate] [--no-bootstrap]" >&2; exit 2 ;;
+        *) echo "usage: $0 [--minimal|--full] [--packages] [--no-bootstrap]" >&2; exit 2 ;;
     esac
 done
 
@@ -41,9 +60,9 @@ case "$(uname -s)" in
     *)      OS=other ;;
 esac
 
-# Default full unless this is positively NOT a Linux desktop: wrong-full in a
-# workspace just links unused configs, wrong-minimal on the desktop silently
-# drops the hypr/quickshell links.
+# Default full unless this is positively not a graphical Linux box: wrong-full in
+# a workspace links a couple of terminal configs nothing reads, wrong-minimal on
+# the desktop silently drops them.
 if [[ -z "$MODE" ]]; then
     if [[ "$OS" != "linux" ]]; then
         MODE=minimal
@@ -54,9 +73,6 @@ if [[ -z "$MODE" ]]; then
     fi
 fi
 
-# The desktop half is Hyprland/Wayland-specific. Asking for it on a Mac would
-# scatter ~/.config/hypr, ~/.config/quickshell and friends into a home that can
-# never use them.
 if [[ "$MODE" == "full" && "$OS" != "linux" ]]; then
     echo "⚠️  --full is Linux-only (this is $OS); falling back to minimal."
     MODE=minimal
@@ -88,39 +104,14 @@ link() {
 }
 
 # ---------------------------------------------------------------- packages --
-# Names are per package manager because they genuinely differ (timew is
-# `timewarrior` on brew). Only what this repo's configs actually invoke is
-# listed -- if nothing here shells out to it, it does not belong.
-
-# Portable: the CLI half works the same on every machine.
+# Only what this repo's configs actually invoke is listed -- if nothing here
+# shells out to it, it does not belong.
 PKGS_CLI_ARCH=(zsh tmux starship atuin jq fzf eza zoxide neovim git)
 PKGS_CLI_BREW=(zsh tmux starship atuin jq fzf eza zoxide neovim git)
 
-# The Linux desktop. Split from optional because without these the neu shell
-# either will not start or renders wrong.
-#   qt6-5compat    Qt5Compat.GraphicalEffects -> NeuSurface's inset shadows
-#   qt6-declarative QtQuick.Effects.RectangularShadow -> the raised pair
-#   ttf-ubuntu-mono-nerd  every icon in the bar, spotlight and prompt
-#   librsvg/ffmpeg  theme/gen.py rasterises the wallpaper
-#   libpulse/iw     bin/neu_sysinfo.sh reads volume and wifi through these
-PKGS_DESKTOP_ARCH=(
-    hyprland hyprpaper hypridle hyprlock
-    quickshell qt6-declarative qt6-5compat qt6ct
-    ttf-ubuntu-mono-nerd adwaita-fonts breeze-icons
-    libpulse iw jq python librsvg ffmpeg libnotify
-    waybar wofi dunst          # panic-mode fallback, see NEU_THEME.md
-)
-
-# Used by panes and binds, but the shell degrades gracefully without them.
-#   opencode   one of the agent harnesses SUPER+I can drive (see below); the
-#              sidebar falls back to its own built-in harness without it
-PKGS_OPTIONAL_ARCH=(task timew tea playerctl copyq wtype grim slurp ghostty kitty
-                    opencode)
-
-# The other harness lives on npm rather than in the repos. Deliberately NOT
-# installed for you -- a global npm package is the operator's call, not an
-# installer's -- but named here so the detection below offers the exact command.
-PKG_HARNESS_NPM="@earendil-works/pi-coding-agent"
+# Terminals, on a Linux desktop only. The configs are linked either way; these
+# are what reads them.
+PKGS_TERM_ARCH=(ghostty kitty)
 
 missing_pkgs() {
     local -n _list=$1
@@ -134,20 +125,6 @@ missing_pkgs() {
         # got there -- starship and atuin arrive via the bootstrap below, and
         # zoxide/eza are often cargo-installed.
         command -v "$p" >/dev/null 2>&1 && continue
-        # Fonts are about the family being resolvable, not where it came from:
-        # these are frequently dropped into ~/.local/share/fonts by hand.
-        # fc-match, not `fc-list | grep`: grep -q closes the pipe early, fc-list
-        # dies on SIGPIPE, and `set -o pipefail` turns that into a false miss.
-        # fc-match always answers, so the family has to be compared -- an
-        # unresolvable name silently falls back to something else.
-        case "$p" in
-            ttf-ubuntu-mono-nerd)
-                [[ "$(fc-match "UbuntuMono Nerd Font" -f '%{family}' 2>/dev/null)" == *UbuntuMono* ]] \
-                    && continue ;;
-            adwaita-fonts)
-                [[ "$(fc-match "Adwaita Sans" -f '%{family}' 2>/dev/null)" == *Adwaita* ]] \
-                    && continue ;;
-        esac
         out+=("$p")
     done
     printf '%s\n' "${out[@]:-}"
@@ -165,7 +142,7 @@ do_packages() {
     local want=()
     if [[ "$PKG_MGR" == "pacman" ]]; then
         want+=("${PKGS_CLI_ARCH[@]}")
-        [[ "$MODE" == "full" ]] && want+=("${PKGS_DESKTOP_ARCH[@]}" "${PKGS_OPTIONAL_ARCH[@]}")
+        [[ "$MODE" == "full" ]] && want+=("${PKGS_TERM_ARCH[@]}")
     else
         want+=("${PKGS_CLI_BREW[@]}")
     fi
@@ -207,156 +184,36 @@ link starship/starship.toml  "$HOME/.config/starship.toml"
 link atuin/config.toml       "$HOME/.config/atuin/config.toml"
 link bin/tmux-session-manager.sh "$HOME/.config/tms/tmux-session-manager.sh"
 
+for f in "$SCRIPT_DIR"/tms_projects/*.conf; do
+    [[ -e "$f" ]] || continue
+    link "tms_projects/$(basename "$f")" "$HOME/.config/tms/projects/$(basename "$f")"
+done
+
 if [[ "$MODE" == "full" ]]; then
-    # Desktop utility scripts go on PATH so nothing (hyprland binds, other
-    # scripts) needs to know where this repo is cloned.
+    # Utility scripts go on PATH so nothing needs to know where this repo is
+    # cloned. All of them read sysfs or plain CLI tools and degrade with a
+    # message rather than a traceback when the hardware is not there.
     echo "🔗 Linking scripts into ~/.local/bin..."
-    for f in "$SCRIPT_DIR"/bin/*.sh "$SCRIPT_DIR"/bin/*.py; do
+    for f in "$SCRIPT_DIR"/bin/*.sh; do
         [[ -e "$f" ]] || continue
         link "bin/$(basename "$f")" "$HOME/.local/bin/$(basename "$f")"
     done
 
-    echo "🔗 Linking desktop configs..."
-    # hyprland.conf was replaced by hyprland.lua (Hyprland >= 0.55)
-    old="$HOME/.config/hypr/hyprland.conf"
-    if [[ -L "$old" && "$(readlink -f "$old" 2>/dev/null || true)" == "$SCRIPT_DIR"/* ]]; then
-        rm "$old" && echo "  🧹 removed stale $old (replaced by hyprland.lua)"
-    fi
-    for f in hyprland.lua hypridle.conf hyprlock.conf hyprpaper.conf neu.lua; do
-        link "hypr/$f" "$HOME/.config/hypr/$f"
-    done
-    for f in "$SCRIPT_DIR"/waybar/*; do
-        link "waybar/$(basename "$f")" "$HOME/.config/waybar/$(basename "$f")"
-    done
-    # Quickshell configs are whole directory trees, so link the package itself
-    # rather than each file; `qs -c commandcenter` resolves it by that name.
-    link quickshell               "$HOME/.config/quickshell/commandcenter"
+    # Terminals. Catppuccin Mocha, standing on their own: each pulls the neu
+    # palette in through an OPTIONAL include that matches nothing until the rgtv
+    # dotfiles are installed, so there is no half-themed state and nothing to
+    # undo when that repo comes off.
+    echo "🔗 Linking terminal configs..."
     link kitty/kitty.conf         "$HOME/.config/kitty/kitty.conf"
-    link kitty/neu.conf           "$HOME/.config/kitty/neu.conf"
     link alacritty/alacritty.toml "$HOME/.config/alacritty/alacritty.toml"
-    link alacritty/neu.toml       "$HOME/.config/alacritty/neu.toml"
-    link wofi/config              "$HOME/.config/wofi/config"
-    link wofi/style.css           "$HOME/.config/wofi/style.css"
     link ghostty/config           "$HOME/.config/ghostty/config"
-    link ghostty/themes/neu       "$HOME/.config/ghostty/themes/neu"
-    link dunst/dunstrc            "$HOME/.config/dunst/dunstrc"
-    link tmux_conf/neu.conf       "$HOME/.tmux-neu.conf"
-
-    # --- neu theme: app toolkits -------------------------------------------
-    # These were real files before the theme port; link() moves each to
-    # <file>.predotfiles once, and uninstall_config.sh puts them back.
-    echo "🎨 Linking neu theme (GTK / Qt)..."
-    link gtk/settings.ini  "$HOME/.config/gtk-3.0/settings.ini"
-    link gtk/gtk.css       "$HOME/.config/gtk-3.0/gtk.css"
-    link gtk4/gtk.css      "$HOME/.config/gtk-4.0/gtk.css"
-    link qt6ct/qt6ct.conf  "$HOME/.config/qt6ct/qt6ct.conf"
-    link qt6ct/neu.conf    "$HOME/.config/qt6ct/colors/neu.conf"
-    # KDE Frameworks apps (dolphin, ark, okular) take no palette from qt6ct at
-    # all: KColorSchemeManager loads a NAMED scheme file, and with none selected
-    # they land on Breeze Light -- which is why the file manager came up bright
-    # white on a dark desktop. Neu.colors is the scheme; kdeglobals selects it.
-    link kde/Neu.colors    "$HOME/.local/share/color-schemes/Neu.colors"
-    link kde/kdeglobals    "$HOME/.config/kdeglobals"
-
-    # --- neu shell: tray ordering ------------------------------------------
-    # systemd fires xdg-desktop-autostart.target as soon as the graphical
-    # session is up -- a second or two before quickshell claims the
-    # StatusNotifierWatcher name. An autostart app that offers its tray icon
-    # only once (Enpass) loses that race and shows nothing all session. The
-    # drop-in holds the target until the watcher answers.
-    echo "🔔 Ordering XDG autostart after the tray watcher..."
-    link systemd/neu-tray-ready.service \
-        "$HOME/.config/systemd/user/neu-tray-ready.service"
-    link systemd/xdg-desktop-autostart.target.d/after-neu-tray.conf \
-        "$HOME/.config/systemd/user/xdg-desktop-autostart.target.d/after-neu-tray.conf"
-
-    # --- neu shell: fleet alerts -------------------------------------------
-    # ntfy -> desktop notifications -> the notification history center. Linked
-    # but deliberately NOT enabled: it needs ~/.config/neu/ntfy.env (0600, from
-    # systemd/neu-ntfy.env.example) before it can do anything, so enabling it
-    # here would only produce a unit that restarts forever.
-    #   systemctl --user enable --now neu-ntfy.service
-    link systemd/neu-ntfy.service \
-        "$HOME/.config/systemd/user/neu-ntfy.service"
-
-    # --- neu shell: the LLM sidebar ----------------------------------------
-    # SUPER+I talks to an OpenAI-compatible server (LM Studio, llama-server)
-    # named in ~/.config/neu/llm.env. Nothing is linked for it -- bin/neu-llm.py
-    # goes on PATH with the other scripts above -- but without that file the
-    # panel opens and says so, which is the whole setup step:
-    #   install -d -m 700 ~/.config/neu
-    #   install -m 600 bin/neu-llm.env.example ~/.config/neu/llm.env
-    if [[ ! -f "$HOME/.config/neu/llm.env" ]]; then
-        echo "  ℹ️  LLM sidebar idle until ~/.config/neu/llm.env exists" \
-             "(template: bin/neu-llm.env.example)"
-    fi
-
-    # --- neu shell: the ssh phone book -------------------------------------
-    # SUPER+P lists ~/.ssh/config; ~/.config/neu/ssh.json adds to it and can
-    # shadow it. Same arrangement as llm.env -- nothing is linked, the file is
-    # yours and stays out of this repo:
-    #   install -d -m 700 ~/.config/neu
-    #   install -m 600 bin/neu-ssh.json.example ~/.config/neu/ssh.json
-    if [[ ! -f "$HOME/.config/neu/ssh.json" ]]; then
-        echo "  ℹ️  ssh phone book (SUPER+P) is reading ~/.ssh/config only" \
-             "(add more: template bin/neu-ssh.json.example)"
-    fi
-
-    # Which agent harness can answer on SUPER+I. The builtin always can; pi and
-    # opencode are optional and bring bash, file writes and MCP with them, so
-    # say what is here and what installing the rest would buy.
-    echo "🤖 Agent harnesses (SUPER+I):"
-    "$SCRIPT_DIR/bin/neu-llm-harness.sh" --detect | python3 -c "$(cat <<'PY'
-import json, sys
-d = json.load(sys.stdin)
-for h in d['harnesses']:
-    mark = '✅' if h['available'] else '  '
-    where = h['version'] or 'not installed'
-    star = ' (active)' if h['id'] == d['active'] else ''
-    print(f"  {mark} {h['name']:<14} {where}{star}")
-    print(f"       {h['note']}")
-    if not h['available']:
-        print(f"       install: {h['install']}")
-print("  Switch with NEU_LLM_HARNESS=<id> in ~/.config/neu/llm.env, or in the panel menu.")
-PY
-)" 2>/dev/null || echo "  ⚠️  harness detection failed (python3 missing?)"
-
-    # pi is an npm global, so it cannot ride along with the pacman list above.
-    if ! command -v pi >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
-        echo "  💡 pi adds bash and file writes behind approval cards:"
-        echo "       npm install -g $PKG_HARNESS_NPM"
-    fi
-
-    systemctl --user daemon-reload 2>/dev/null || true
-
-    for f in "$SCRIPT_DIR"/tms_projects/*.conf; do
-        link "tms_projects/$(basename "$f")" "$HOME/.config/tms/projects/$(basename "$f")"
-    done
 fi
 
-# --- Generated theme files ---------------------------------------------------
-# Several generated files embed an absolute path ($HOME in qt6ct.conf, the repo
-# root in hyprpaper.conf and hyprlock.conf), so a checkout on a different machine
-# -- or in a different directory -- ships stale paths. Regenerating is cheap and
-# idempotent, so do it whenever the tree does not already match.
-#
-# This WRITES to the repo, which matters when testing with a throwaway HOME: the
-# sandbox path would be baked in. Pass --no-generate for that (see NEU_THEME.md).
-
-if [[ "$MODE" == "full" && "$GENERATE" == "1" ]] && command -v python3 >/dev/null 2>&1; then
-    if [[ -f "$SCRIPT_DIR/theme/gen.py" ]]; then
-        if ! python3 "$SCRIPT_DIR/theme/gen.py" --check >/dev/null 2>&1; then
-            echo "🎨 Generated theme files are stale for this machine; regenerating..."
-            python3 "$SCRIPT_DIR/theme/gen.py" | sed 's/^/  /' || \
-                echo "  ⚠️  theme/gen.py failed; the linked configs may carry another machine's paths"
-        fi
-    fi
-fi
-
-# --- Bootstrap (workspace mode only) -----------------------------------------
-# Best-effort: a workspace must still start with no network, so every step
-# warns and moves on instead of failing the script. Runs after linking so
-# configs land even offline.
+# --- Bootstrap ---------------------------------------------------------------
+# Best-effort: a workspace must still start with no network, so every step warns
+# and moves on instead of failing the script. Runs after linking so configs land
+# even offline. starship and TPM are not packaged everywhere, which is exactly
+# why they are fetched here rather than listed above.
 
 bootstrap_starship() {
     if command -v starship >/dev/null 2>&1 || [[ -x "$HOME/.local/bin/starship" ]]; then
@@ -394,4 +251,6 @@ if [[ "$MODE" == "minimal" && "$BOOTSTRAP" == "1" ]]; then
     bootstrap_tpm      || echo "  ⚠️  TPM bootstrap failed"
 fi
 
-echo "✅ Dotfiles installation complete."
+write_stamp personal
+
+echo "✅ Dotfiles installation complete ($MODE)."
