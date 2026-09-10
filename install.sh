@@ -301,7 +301,11 @@ bootstrap_atuin() {
     if command -v atuin >/dev/null 2>&1 || [[ -x "$HOME/.atuin/bin/atuin" ]]; then
         return 0
     fi
-    if curl -LsSf https://setup.atuin.sh | sh; then
+    # --non-interactive is load-bearing, not cosmetic: without it the installer
+    # probes for a tty with `exec 3</dev/tty`, and under dash -- which is /bin/sh
+    # on Debian/Ubuntu, and what a Coder startup_script runs -- a redirection
+    # error on `exec` kills the shell outright. The flag makes it skip the probe.
+    if curl -LsSf https://setup.atuin.sh | sh -s -- --non-interactive; then
         echo "  ✅ atuin installed to ~/.atuin/bin"
         # The history db is useless without a key, and `atuin init` exits 1
         # without one -- which silently costs you Ctrl+R on every new shell.
