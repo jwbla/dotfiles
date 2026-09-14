@@ -247,7 +247,16 @@ link zshrc/.zshrc            "$HOME/.zshrc"
 link tmux_conf/.tmux.conf    "$HOME/.tmux.conf"
 link starship/starship.toml  "$HOME/.config/starship.toml"
 link atuin/config.toml       "$HOME/.config/atuin/config.toml"
+link dex/config.toml         "$HOME/.config/dex/config.toml"
 link bin/tmux-session-manager.sh "$HOME/.config/tms/tmux-session-manager.sh"
+
+# The config names the server; the bearer token is deliberately not in it (or
+# in this repo at all — see dex/config.toml). Same shape as the atuin key
+# check below: report once, non-interactively, and move on.
+if [[ ! -s "$HOME/.config/dex/token" ]]; then
+    echo "  ℹ️  no ~/.config/dex/token yet; dex CLI commands will get 401 until you make one:"
+    echo "       echo '<your dex bearer token>' > ~/.config/dex/token && chmod 600 ~/.config/dex/token"
+fi
 
 for f in "$SCRIPT_DIR"/tms_projects/*.conf; do
     [[ -e "$f" ]] || continue

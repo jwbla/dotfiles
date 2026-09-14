@@ -31,10 +31,10 @@ without `--packages`; otherwise the script just reports what is missing.
 ./install.sh
 ```
 
-Links zsh, tmux, starship, atuin, git aliases and the tms project configs,
-plus — on a Linux desktop — the kitty/alacritty/ghostty configs and the
-scripts in `bin/`, which go into `~/.local/bin` so nothing depends on where
-this repo is cloned.
+Links zsh, tmux, starship, atuin, dex, git aliases and the tms project
+configs, plus — on a Linux desktop — the kitty/alacritty/ghostty configs and
+the scripts in `bin/`, which go into `~/.local/bin` so nothing depends on
+where this repo is cloned.
 
 ### Coder workspaces
 
@@ -145,3 +145,23 @@ Sync is off (`auto_sync = false`) — there's no server yet. The key at
 `~/.local/share/atuin/key` was generated locally (see above) rather than by
 `atuin register`. Back it up before adding a server: sync is end-to-end
 encrypted and the server cannot recover that key for you.
+
+## dex
+
+`dex/config.toml` is symlinked to `~/.config/dex/config.toml` and points the
+`dex` CLI (the fleet's agile-PM tool) at the shared server
+(`http://192.168.1.204:3000`) instead of a machine-local SQLite file, the
+same way every other client (web UI, MCP) already reaches it. See dex's own
+README for what "remote mode" does and how the CLI decides local vs. remote.
+
+The bearer token is deliberately **not** in this repo — `config.toml` only
+names a `token_file`, `~/.config/dex/token`, and install.sh prints a one-line
+reminder if that file is missing or empty:
+
+```
+echo '<your dex bearer token>' > ~/.config/dex/token && chmod 600 ~/.config/dex/token
+```
+
+Mint a token on the server with `dex apikey create <name>` (or ask whoever
+already has one). `chmod 600` matters: unlike `config.toml`, this file holds
+a live credential.

@@ -65,6 +65,7 @@ SCAN_DIRS=(
     "$HOME/.local/bin"
     "$HOME/.config"
     "$HOME/.config/atuin"
+    "$HOME/.config/dex"
     "$HOME/.config/tms"
     "$HOME/.config/tms/projects"
     "$HOME/.config/kitty"
@@ -101,11 +102,16 @@ for dir in \
     "$HOME/.config/tms/projects" \
     "$HOME/.config/tms" \
     "$HOME/.config/atuin" \
+    "$HOME/.config/dex" \
     "$HOME/.config/kitty" \
     "$HOME/.config/alacritty" \
     "$HOME/.config/ghostty"
 do
     if [[ -d "$dir" ]]; then
+        # --ignore-fail-on-non-empty is load-bearing here specifically: a real
+        # (non-symlink) ~/.config/dex/token can be sitting next to the
+        # config.toml symlink this script just removed, and it must survive
+        # an uninstall — only the empty-directory case actually removes it.
         rmdir --ignore-fail-on-non-empty "$dir"
     fi
 done

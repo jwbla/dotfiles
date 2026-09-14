@@ -1,0 +1,12 @@
+# dex remote-mode config — installed to ~/.config/dex/config.toml.
+#
+# Points every `dex` CLI command at the shared server instead of the local
+# SQLite file (see the "Remote mode" section of the dex README). The bearer
+# token deliberately does NOT live here — this file is checked into a
+# dotfiles repo, and the token doesn't belong in version control. Put it in
+# the token_file below instead (chmod 600); install.sh prints a reminder if
+# it's missing.
+
+[remote]
+url = "http://192.168.1.204:3000"
+token_file = "~/.config/dex/token"
