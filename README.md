@@ -14,27 +14,35 @@ needs a display server, and nothing here depends on the repo below.
 > machine with both reverts cleanly by uninstalling that one.
 
 ```sh
-./install.sh              # auto: full on a Linux desktop, minimal on macOS / Coder
-./install.sh --packages   # ... and install any missing packages (pacman or brew)
-./install.sh --minimal    # portable CLI only, no desktop configs
+./install.sh              # auto: full on a desktop (Linux or macOS), minimal in Coder
+./install.sh --packages   # ... and install any missing packages (pacman, apt or brew)
+./install.sh --minimal    # portable CLI only, no terminal configs
 ./install.sh --help
 ```
 
-`--full` is Linux-only and is refused elsewhere. Packages are never installed
-without `--packages`; otherwise the script just reports what is missing.
+Packages are never installed without `--packages`; otherwise the script just
+reports what is missing. On macOS the terminals themselves (ghostty, kitty) are
+casks and stay a manual install; only their configs are linked.
+
+Both scripts run on stock macOS bash 3.2 and BSD userland: no associative
+arrays, namerefs, `date -I` or GNU-only flags. Check a change with
+`docker run --rm --network none -v "$PWD":/src:ro bash:3.2 bash -n /src/install.sh`.
 
 ## Install
 
-### Desktop (Linux)
+### Desktop (Linux or macOS)
 
 ```
 ./install.sh
 ```
 
 Links zsh, tmux, starship, atuin, dex, git aliases and the tms project
-configs, plus — on a Linux desktop — the kitty/alacritty/ghostty configs and
-the scripts in `bin/`, which go into `~/.local/bin` so nothing depends on
-where this repo is cloned.
+configs, plus — on any desktop — the kitty/alacritty/ghostty configs. On
+Linux it also links the scripts in `bin/` into `~/.local/bin`, so nothing
+depends on where this repo is cloned; they read sysfs, so a Mac gets none.
+
+Re-running it also removes any symlink into this repo whose target no longer
+exists — what an older revision linked and a later one moved or dropped.
 
 ### Coder workspaces
 
@@ -94,6 +102,27 @@ The zshrc degrades gracefully when tools are missing, but expects:
 - **nice to have**: eza (`l`/`lt`), bat (`inv` preview), zoxide, git-delta,
   television (`tv`), atuin (Ctrl+R / Up history search — see below)
 - **desktop**: ghostty/kitty/alacritty
+
+## Terminals and the neu palette
+
+The three terminal configs here are Catppuccin Mocha and complete on their
+own. Each ends in an *optional* include that the rgtv repo satisfies when it
+is installed and that is silently skipped otherwise:
+
+| config | include | absent |
+|---|---|---|
+| `ghostty/config` | `config-file = ?neu.conf` | `?` skips it (ghostty ≥ 1.1) |
+| `kitty/kitty.conf` | `globinclude neu.conf` | matches zero files |
+| `alacritty/alacritty.toml` | `import = [...neu.toml]` | alacritty skips missing imports |
+
+Nothing in this repo may name a file only the rgtv repo ships. If a machine
+with only this repo shows ghostty complaining about a theme called `neu`, its
+checkout predates the split that moved the theme out (`4d67dbb`):
+
+```
+git pull && ./install.sh
+```
+
 ## atuin
 
 Shell history lives in atuin's SQLite db (`~/.local/share/atuin/history.db`)

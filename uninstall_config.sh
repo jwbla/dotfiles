@@ -71,6 +71,10 @@ SCAN_DIRS=(
     "$HOME/.config/kitty"
     "$HOME/.config/alacritty"
     "$HOME/.config/ghostty"
+    # Nothing links here any more, but the pre-split installer did (themes/neu,
+    # now the rgtv repo's), and a machine that pulled without re-running
+    # install.sh still carries the dangling link.
+    "$HOME/.config/ghostty/themes"
 )
 
 remove_repo_links() {
@@ -79,7 +83,10 @@ remove_repo_links() {
         return 0
     fi
     while IFS= read -r l; do
-        target="$(readlink -f "$l" 2>/dev/null || true)"
+        # The raw link text, not readlink -f: a link into this repo whose target
+        # was removed by a later revision must still count as ours, and -f
+        # returns nothing for it.
+        target="$(readlink "$l" 2>/dev/null || true)"
         if [[ "$target" == "$SCRIPT_DIR"/* ]]; then
             rm "$l"
             echo "  ✅ Removed $l"
@@ -105,14 +112,17 @@ for dir in \
     "$HOME/.config/dex" \
     "$HOME/.config/kitty" \
     "$HOME/.config/alacritty" \
+    "$HOME/.config/ghostty/themes" \
     "$HOME/.config/ghostty"
 do
     if [[ -d "$dir" ]]; then
-        # --ignore-fail-on-non-empty is load-bearing here specifically: a real
+        # Failing silently on a non-empty directory is load-bearing: a real
         # (non-symlink) ~/.config/dex/token can be sitting next to the
         # config.toml symlink this script just removed, and it must survive
-        # an uninstall — only the empty-directory case actually removes it.
-        rmdir --ignore-fail-on-non-empty "$dir"
+        # an uninstall -- only the empty-directory case actually removes it.
+        # Plain rmdir rather than --ignore-fail-on-non-empty, which BSD rmdir
+        # on macOS does not have, and the terminal configs now install there.
+        rmdir "$dir" 2>/dev/null || true
     fi
 done
 

@@ -4,9 +4,9 @@
 # desktop, a Mac, a Coder workspace -- and must be idempotent and prompt-free on
 # all of them, because workspaces run it non-interactively on every start.
 #
-#   minimal   the portable CLI. macOS and Coder workspaces get this.
-#   full      minimal + the GUI terminal configs and the laptop scripts.
-#             Linux only.
+#   minimal   the portable CLI. Coder workspaces get this.
+#   full      minimal + the GUI terminal configs. The Arch desktop and the Mac
+#             get this; the laptop scripts in bin/ are Linux-only within it.
 #
 # THE DESKTOP IS A SEPARATE REPO. Hyprland, the quickshell "neu" shell, the
 # theme and the fleet tools live in gitea.i.realgamers.tv/jwbla/dotfiles, which
@@ -17,6 +17,12 @@
 # Package installation is OPT-IN (`--packages`). Without it the script only
 # reports what is missing, so a workspace start never blocks on a package
 # manager and nothing is installed behind your back.
+#
+# BASH 3.2. Stock macOS ships the last GPLv2 bash and nothing newer, and this
+# has to run there before brew exists. So: no associative arrays, no namerefs,
+# no `date -I`, no GNU-only flags. The lookups below are case statements for
+# that reason, and a `declare -A` here would kill the script under set -e
+# before a single link is made.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -32,7 +38,7 @@ write_stamp() {
     { echo "repo=$SCRIPT_DIR"
       echo "commit=$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)"
       echo "mode=$MODE"
-      echo "installed=$(date -Is)"
+      echo "installed=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
     } > "$STAMP_DIR/$1.stamp"
 }
 
@@ -60,11 +66,14 @@ case "$(uname -s)" in
     *)      OS=other ;;
 esac
 
-# Default full unless this is positively not a graphical Linux box: wrong-full in
-# a workspace links a couple of terminal configs nothing reads, wrong-minimal on
-# the desktop silently drops them.
+# Default full unless this is positively a headless box: wrong-full in a
+# workspace links a couple of terminal configs nothing reads, wrong-minimal on a
+# desktop silently drops them. A Mac IS a desktop here: ghostty and kitty are
+# native there and read ~/.config exactly as on Linux, and a ghostty left
+# unmanaged is how the work machine kept a pre-split config that named a theme
+# only the rgtv repo ships.
 if [[ -z "$MODE" ]]; then
-    if [[ "$OS" != "linux" ]]; then
+    if [[ "$OS" == "other" ]]; then
         MODE=minimal
     # CODER_AGENT_TOKEN is the one the Coder template actually exports; CODER and
     # CODER_AGENT_URL are not set in a startup_script, and the checkout is not
@@ -76,11 +85,6 @@ if [[ -z "$MODE" ]]; then
     else
         MODE=full
     fi
-fi
-
-if [[ "$MODE" == "full" && "$OS" != "linux" ]]; then
-    echo "⚠️  --full is Linux-only (this is $OS); falling back to minimal."
-    MODE=minimal
 fi
 
 echo "📦 Installing dotfiles ($MODE mode, $OS) from $SCRIPT_DIR"
@@ -108,6 +112,27 @@ link() {
     echo "  ✅ $dst"
 }
 
+# A symlink into this repo whose target no longer exists can only be a leftover
+# from an older revision of this repo, and it is worth removing on every run:
+# the pre-split installer linked ~/.config/ghostty/themes/neu, the split moved
+# that file to the rgtv repo, and a machine that pulled but never re-ran the
+# installer kept the dangling link next to a config that still said
+# `theme = neu`. Confined to the directories this repo links into, and to links
+# that name $SCRIPT_DIR, so another repo's links are never touched.
+prune_stale_links() {
+    local dir l target
+    for dir in "$@"; do
+        [[ -d "$dir" ]] || continue
+        while IFS= read -r l; do
+            target="$(readlink "$l" 2>/dev/null || true)"
+            if [[ "$target" == "$SCRIPT_DIR"/* && ! -e "$l" ]]; then
+                rm -f "$l"
+                echo "  🧹 removed stale $l -> $target"
+            fi
+        done < <(find "$dir" -maxdepth 1 -type l 2>/dev/null)
+    done
+}
+
 # ---------------------------------------------------------------- packages --
 # One canonical list (Arch names), plus per-manager overrides. Three parallel
 # arrays duplicated nine identical strings at two managers and would not survive
@@ -118,26 +143,43 @@ link() {
 # and the installer would happily apt-install a downgrade over a newer build.
 PKGS_CLI=(zsh tmux starship atuin jq fzf eza zoxide neovim git)
 
-# Terminals, on a Linux desktop only. The configs are linked either way; these
-# are what reads them.
+# Terminals, installed on a Linux desktop only: on macOS both are casks that
+# `brew install` may or may not resolve, so they stay a manual step there. The
+# configs are linked on every desktop regardless; these are just what reads them.
 PKGS_TERM=(ghostty kitty)
 
-# "<mgr>:<canonical>" -> the name there. Absent means "spelled the same".
-# "-" means NOT PACKAGED HERE, and PKG_BOOT below is how it actually arrives.
-declare -A PKG_ALIAS=(
-    [apt:starship]=-        # not in the Ubuntu archive at all
-    [apt:atuin]=-           # ditto
-    [apt:neovim]=-          # 24.04 ships 0.9.5; treat as unpackaged rather than
-                            # downgrade a newer /usr/local build
-    [brew:timew]=timewarrior
-)
+# pkg_for <mgr> <canonical> -> the name there. Unlisted means "spelled the
+# same". "-" means NOT PACKAGED HERE, and pkg_boot is how it actually arrives.
+pkg_for() {
+    case "$1:$2" in
+        apt:starship) printf '%s' - ;;   # not in the Ubuntu archive at all
+        apt:atuin)    printf '%s' - ;;   # ditto
+        apt:neovim)   printf '%s' - ;;   # 24.04 ships 0.9.5; treat as unpackaged
+                                         # rather than downgrade a newer build
+        brew:timew)   printf '%s' timewarrior ;;
+        *)            printf '%s' "$2" ;;
+    esac
+}
 
-# What proves the need is already met, when it is not the package name.
-declare -A PKG_BIN=([neovim]=nvim)
+# pkg_bin <canonical> -> what proves the need is already met, when that is not
+# the package name.
+pkg_bin() {
+    case "$1" in
+        neovim) printf '%s' nvim ;;
+        *)      printf '%s' "$1" ;;
+    esac
+}
 
-# How a "-" package arrives instead. These land in $HOME, which is the half that
-# survives a container being recreated, so they are worth running unconditionally.
-declare -A PKG_BOOT=([starship]=bootstrap_starship [atuin]=bootstrap_atuin)
+# pkg_boot <canonical> -> how a "-" package arrives instead, or nothing. These
+# land in $HOME, which is the half that survives a container being recreated,
+# so they are worth running unconditionally.
+pkg_boot() {
+    case "$1" in
+        starship) printf '%s' bootstrap_starship ;;
+        atuin)    printf '%s' bootstrap_atuin ;;
+        *)        printf '%s' "" ;;
+    esac
+}
 
 # Prompt-freeness has to be structural: this script runs unattended on every
 # workspace start, and a sudo password prompt there hangs the boot forever.
@@ -154,11 +196,6 @@ setup_sudo() {
     fi
 }
 
-pkg_for() {  # <mgr> <canonical> -> name there, or "-"
-    local key="$1:$2"
-    printf '%s' "${PKG_ALIAS[$key]-$2}"
-}
-
 pkg_installed() {  # <mgr> <name>
     case "$1" in
         pacman) pacman -Qq "$2" &>/dev/null ;;
@@ -167,20 +204,19 @@ pkg_installed() {  # <mgr> <name>
     esac
 }
 
-# Splits a canonical list three ways: MISS (installable by $PKG_MGR), BOOT
-# (unpackaged here but with a handler), UNAVAIL (unpackaged, no handler -- say so
-# and move on).
+# triage <canonical>... splits the list three ways: MISS (installable by
+# $PKG_MGR), BOOT (unpackaged here but with a handler), UNAVAIL (unpackaged, no
+# handler -- say so and move on). Takes the names as arguments, not a nameref.
 MISS=() BOOT=() UNAVAIL=()
 triage() {
-    local -n _list=$1
     local c name
-    for c in "${_list[@]}"; do
+    for c in "$@"; do
         # A binary already on PATH means the need is met however it got there --
         # starship and atuin arrive via bootstrap, zoxide/eza are often cargo.
-        command -v "${PKG_BIN[$c]-$c}" >/dev/null 2>&1 && continue
+        command -v "$(pkg_bin "$c")" >/dev/null 2>&1 && continue
         name="$(pkg_for "$PKG_MGR" "$c")"
         if [[ "$name" == "-" ]]; then
-            if [[ -n "${PKG_BOOT[$c]-}" ]]; then BOOT+=("$c"); else UNAVAIL+=("$c"); fi
+            if [[ -n "$(pkg_boot "$c")" ]]; then BOOT+=("$c"); else UNAVAIL+=("$c"); fi
             continue
         fi
         pkg_installed "$PKG_MGR" "$name" && continue
@@ -200,8 +236,8 @@ do_packages() {
     setup_sudo
 
     local want=("${PKGS_CLI[@]}")
-    [[ "$MODE" == "full" ]] && want+=("${PKGS_TERM[@]}")
-    triage want
+    [[ "$MODE" == "full" && "$OS" == "linux" ]] && want+=("${PKGS_TERM[@]}")
+    triage "${want[@]}"
 
     (( ${#UNAVAIL[@]} )) && \
         echo "📦 Not packaged for $PKG_MGR, skipping: ${UNAVAIL[*]}"
@@ -266,22 +302,33 @@ done
 if [[ "$MODE" == "full" ]]; then
     # Utility scripts go on PATH so nothing needs to know where this repo is
     # cloned. All of them read sysfs or plain CLI tools and degrade with a
-    # message rather than a traceback when the hardware is not there.
-    echo "🔗 Linking scripts into ~/.local/bin..."
-    for f in "$SCRIPT_DIR"/bin/*.sh; do
-        [[ -e "$f" ]] || continue
-        link "bin/$(basename "$f")" "$HOME/.local/bin/$(basename "$f")"
-    done
+    # message rather than a traceback when the hardware is not there -- but
+    # sysfs itself is Linux, so a Mac gets none of them.
+    if [[ "$OS" == "linux" ]]; then
+        echo "🔗 Linking scripts into ~/.local/bin..."
+        for f in "$SCRIPT_DIR"/bin/*.sh; do
+            [[ -e "$f" ]] || continue
+            link "bin/$(basename "$f")" "$HOME/.local/bin/$(basename "$f")"
+        done
+    fi
 
     # Terminals. Catppuccin Mocha, standing on their own: each pulls the neu
     # palette in through an OPTIONAL include that matches nothing until the rgtv
     # dotfiles are installed, so there is no half-themed state and nothing to
-    # undo when that repo comes off.
+    # undo when that repo comes off. NOTHING here may name a file only that repo
+    # ships -- a machine with this repo alone (work) has to come up clean.
     echo "🔗 Linking terminal configs..."
     link kitty/kitty.conf         "$HOME/.config/kitty/kitty.conf"
     link alacritty/alacritty.toml "$HOME/.config/alacritty/alacritty.toml"
     link ghostty/config           "$HOME/.config/ghostty/config"
 fi
+
+echo "🧹 Pruning links left by older revisions of this repo..."
+prune_stale_links "$HOME" "$HOME/.local/bin" "$HOME/.config" \
+    "$HOME/.config/atuin" "$HOME/.config/dex" \
+    "$HOME/.config/tms" "$HOME/.config/tms/projects" \
+    "$HOME/.config/kitty" "$HOME/.config/alacritty" \
+    "$HOME/.config/ghostty" "$HOME/.config/ghostty/themes"
 
 # --- Bootstrap ---------------------------------------------------------------
 # Best-effort: a workspace must still start with no network, so every step warns
