@@ -9,6 +9,7 @@ path=("$HOME/.local/bin" "$HOME/.cargo/bin" "$HOME/.opencode/bin" $path)
 export PATH
 
 export BROWSER=librewolf
+export EDITOR=nvim
 
 # Share one Cargo build target dir across all Rust projects on this machine.
 # Cargo's fingerprinting isolates per-crate artifacts inside this dir.
