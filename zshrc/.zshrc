@@ -3,7 +3,67 @@
 # ------------------------------
 # PATH and BROWSER live in .zshenv so non-interactive processes see them too.
 # Fallback prompt for shells where starship isn't installed.
-PROMPT='%m:%~ %n %# '
+# PROMPT='%m:%~ %n %# '
+
+autoload -Uz vcs_info
+precmd() { vcs_info }
+
+setopt PROMPT_SUBST
+
+# Prompt palette. Only four colors are wired up below; the full set is kept
+# here for reference so future additions stay in the same neon family
+# (one channel pinned near 2e, the dominant channel at ff/f2).
+#
+#   Red      #ff2e3d        Teal     #2ef2d0
+#   Orange   #ff7a2e        Cyan     #2ed9ff
+#   Yellow   #ffd52e  *     Blue     #2e7dff
+#   Lime     #b8f22e        Indigo   #5b2eff
+#   Green    #2ef27a  *     Mauve    #8b2fe0  *
+#                           Magenta  #d42eff
+#                           Pink     #ff2e9a  *
+#
+#   Neutrals (purple-tinted, for backgrounds/text if ever needed):
+#   Base #12101a  Surface #1c1826  Overlay #2a2438
+#   Dim  #6c6a80  Subtext #a8a4bc  Text    #e6e2f2
+#
+#   * = in use below
+if [[ $COLORTERM == (truecolor|24bit) ]]; then
+    C_MAUVE='%F{#8b2fe0}'
+    C_GREEN='%F{#2ef27a}'
+    C_PINK='%F{#ff2e9a}'
+    C_YELLOW='%F{#ffd52e}'
+    C_RESET='%f'
+else
+    # Approximate Catppuccin Mocha colors using ANSI colors
+    C_MAUVE='%F{magenta}'
+    C_GREEN='%F{green}'
+    C_PINK='%F{magenta}'
+    C_YELLOW='%F{yellow}'
+    C_RESET='%f'
+fi
+
+# Git status in the prompt: (branch+!?)
+#   + staged changes   ! unstaged changes   ? untracked files
+zstyle ':vcs_info:*' enable git
+zstyle ':vcs_info:*' check-for-changes true
+zstyle ':vcs_info:git:*' stagedstr "${C_GREEN}+${C_RESET}"
+zstyle ':vcs_info:git:*' unstagedstr "${C_YELLOW}!${C_RESET}"
+zstyle ':vcs_info:git:*' formats " ${C_MAUVE}(%b${C_RESET}%c%u%m${C_MAUVE})${C_RESET}"
+zstyle ':vcs_info:git:*' actionformats " ${C_MAUVE}(%b|%a${C_RESET}%c%u%m${C_MAUVE})${C_RESET}"
+zstyle ':vcs_info:git*+set-message:*' hooks git-untracked
+# vcs_info has no built-in untracked check; %m is filled by this hook.
++vi-git-untracked() {
+    if [[ -n $(git ls-files --others --exclude-standard 2>/dev/null | head -n1) ]]; then
+        hook_com[misc]+="${C_PINK}?${C_RESET}"
+    fi
+}
+
+if [[ -n $SSH_CONNECTION ]]; then
+    PROMPT="${C_YELLOW}%n@%m${C_RESET} ${C_PINK}%~\${vcs_info_msg_0_} ${C_GREEN}>${C_RESET} "
+else
+    PROMPT="${C_PINK}%~\${vcs_info_msg_0_} ${C_GREEN}>${C_RESET} "
+fi
+
 
 # ------------------------------
 # History
@@ -206,9 +266,9 @@ fi
 # Shell Init & MOTD
 # ------------------------------
 _motd
-command -v starship >/dev/null && eval "$(starship init zsh)"
+# command -v starship >/dev/null && eval "$(starship init zsh)"
 command -v zoxide   >/dev/null && eval "$(zoxide init zsh)"
-command -v tv       >/dev/null && eval "$(tv init zsh)"
+# command -v tv       >/dev/null && eval "$(tv init zsh)"
 # Last: atuin rebinds ^R and Up, so it must load after the Key Bindings block.
 if command -v atuin >/dev/null 2>&1; then
     # Prefer the self-hosted fleet sync server (jwbla-infra ROADMAP.md M5,
