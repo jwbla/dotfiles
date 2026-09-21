@@ -100,7 +100,9 @@ The zshrc degrades gracefully when tools are missing, but expects:
 
 - **core**: zsh, tmux, starship, fzf
 - **nice to have**: eza (`l`/`lt`), bat (`inv` preview), zoxide, git-delta,
-  television (`tv`), atuin (Ctrl+R / Up history search — see below)
+  television (`tv`), atuin (Ctrl+R / Up history search — see below),
+  zsh-syntax-highlighting + zsh-autosuggestions (command-line coloring and
+  ghost-text completions; skipped when absent)
 - **desktop**: ghostty/kitty/alacritty
 
 ## Terminals and the neu palette

@@ -10,37 +10,40 @@ precmd() { vcs_info }
 
 setopt PROMPT_SUBST
 
-# Prompt palette. Only four colors are wired up below; the full set is kept
-# here for reference so future additions stay in the same neon family
-# (one channel pinned near 2e, the dominant channel at ff/f2).
-#
-#   Red      #ff2e3d        Teal     #2ef2d0
-#   Orange   #ff7a2e        Cyan     #2ed9ff
-#   Yellow   #ffd52e  *     Blue     #2e7dff
-#   Lime     #b8f22e        Indigo   #5b2eff
-#   Green    #2ef27a  *     Mauve    #8b2fe0  *
-#                           Magenta  #d42eff
-#                           Pink     #ff2e9a  *
-#
-#   Neutrals (purple-tinted, for backgrounds/text if ever needed):
-#   Base #12101a  Surface #1c1826  Overlay #2a2438
-#   Dim  #6c6a80  Subtext #a8a4bc  Text    #e6e2f2
-#
-#   * = in use below
+# Palette. One neon family: one channel pinned near 2e, the dominant channel
+# at ff/f2, so every accent shares the same saturation and brightness and only
+# the hue moves. Neutrals are the same hue slice as Indigo/Mauve, desaturated.
+# The prompt (C_*) and the command-line highlighter at the bottom of this file
+# both draw from here, so a swap in this table changes both.
+typeset -A _pal
 if [[ $COLORTERM == (truecolor|24bit) ]]; then
-    C_MAUVE='%F{#8b2fe0}'
-    C_GREEN='%F{#2ef27a}'
-    C_PINK='%F{#ff2e9a}'
-    C_YELLOW='%F{#ffd52e}'
-    C_RESET='%f'
+    _pal=(
+        red     '#ff2e3d'   teal    '#2ef2d0'
+        orange  '#ff7a2e'   cyan    '#2ed9ff'
+        yellow  '#ffd52e'   blue    '#2e7dff'
+        lime    '#b8f22e'   indigo  '#5b2eff'
+        green   '#2ef27a'   mauve   '#8b2fe0'
+                            magenta '#d42eff'
+                            pink    '#ff2e9a'
+        # Neutrals (purple-tinted, for backgrounds/text)
+        base    '#12101a'   surface '#1c1826'   overlay '#2a2438'
+        dim     '#6c6a80'   subtext '#a8a4bc'   text    '#e6e2f2'
+    )
 else
-    # Approximate Catppuccin Mocha colors using ANSI colors
-    C_MAUVE='%F{magenta}'
-    C_GREEN='%F{green}'
-    C_PINK='%F{magenta}'
-    C_YELLOW='%F{yellow}'
-    C_RESET='%f'
+    # Nearest of the 16 ANSI colors; the terminal's own theme decides the look.
+    _pal=(
+        red red         teal cyan       orange yellow   cyan cyan
+        yellow yellow   blue blue       lime green      indigo blue
+        green green     mauve magenta   magenta magenta pink magenta
+        base black      surface black   overlay black
+        dim 8           subtext 7       text default
+    )
 fi
+C_MAUVE="%F{${_pal[mauve]}}"
+C_GREEN="%F{${_pal[green]}}"
+C_PINK="%F{${_pal[pink]}}"
+C_YELLOW="%F{${_pal[yellow]}}"
+C_RESET='%f'
 
 # Git status in the prompt: (branch+!?)
 #   + staged changes   ! unstaged changes   ? untracked files
@@ -132,6 +135,15 @@ if command -v eza >/dev/null; then
 else
   alias l="ls -lA --color=auto --group-directories-first"
 fi
+
+# ------------------------------
+# Aliases: Navigation
+# ------------------------------
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias .....='cd ../../../..'
+alias -- -='cd -'
 
 # ------------------------------
 # Aliases: Misc
@@ -297,4 +309,79 @@ if command -v atuin >/dev/null 2>&1; then
     fi
     eval "$(atuin init zsh)"
 fi
+
+# ------------------------------
+# Command-Line Highlighting
+# ------------------------------
+# Both are distro packages (PKGS_CLI in install.sh). Sourced last on purpose:
+# zsh-syntax-highlighting wraps every ZLE widget, so everything that defines
+# one (compinit, the Key Bindings block, atuin init) has to run before it.
+# Missing packages are silently skipped; the shell just stays uncolored.
+_zsh_plugin() {  # <name>: source <name>.zsh from wherever pacman/apt/brew put it
+    local d
+    for d in /usr/share/zsh/plugins /usr/share \
+             "${HOMEBREW_PREFIX:-/opt/homebrew}/share" /usr/local/share; do
+        [[ -r "$d/$1/$1.zsh" ]] && { source "$d/$1/$1.zsh"; return 0; }
+    done
+    return 1
+}
+
+# Ghost text from history, accepted with Right or End.
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=${_pal[dim]}"
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+_zsh_plugin zsh-autosuggestions
+
+if _zsh_plugin zsh-syntax-highlighting; then
+    ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets)
+    typeset -A ZSH_HIGHLIGHT_STYLES
+    # Loud colors for signals, Mauve for structure, same rule as the prompt.
+    ZSH_HIGHLIGHT_STYLES=(
+        default                         none
+        unknown-token                   "fg=${_pal[red]}"
+        # things that run
+        command                         "fg=${_pal[green]}"
+        hashed-command                  "fg=${_pal[green]}"
+        builtin                         "fg=${_pal[green]}"
+        function                        "fg=${_pal[green]}"
+        alias                           "fg=${_pal[green]}"
+        suffix-alias                    "fg=${_pal[green]}"
+        global-alias                    "fg=${_pal[green]}"
+        precommand                      "fg=${_pal[green]},underline"
+        autodirectory                   "fg=${_pal[cyan]}"
+        # structure
+        reserved-word                   "fg=${_pal[mauve]}"
+        commandseparator                "fg=${_pal[mauve]}"
+        redirection                     "fg=${_pal[mauve]}"
+        named-fd                        "fg=${_pal[mauve]}"
+        numeric-fd                      "fg=${_pal[mauve]}"
+        command-substitution-delimiter  "fg=${_pal[mauve]}"
+        process-substitution-delimiter  "fg=${_pal[mauve]}"
+        back-quoted-argument-delimiter  "fg=${_pal[mauve]}"
+        # arguments
+        path                            "fg=${_pal[cyan]}"
+        path_prefix                     "fg=${_pal[subtext]}"
+        single-hyphen-option            "fg=${_pal[subtext]}"
+        double-hyphen-option            "fg=${_pal[subtext]}"
+        single-quoted-argument          "fg=${_pal[yellow]}"
+        double-quoted-argument          "fg=${_pal[yellow]}"
+        dollar-quoted-argument          "fg=${_pal[yellow]}"
+        rc-quote                        "fg=${_pal[yellow]}"
+        dollar-double-quoted-argument   "fg=${_pal[orange]}"
+        back-double-quoted-argument     "fg=${_pal[orange]}"
+        back-dollar-quoted-argument     "fg=${_pal[orange]}"
+        globbing                        "fg=${_pal[orange]}"
+        history-expansion               "fg=${_pal[orange]}"
+        assign                          "fg=${_pal[magenta]}"
+        comment                         "fg=${_pal[dim]}"
+        # brackets highlighter: nesting depth cycles through four hues
+        bracket-error                   "fg=${_pal[red]}"
+        bracket-level-1                 "fg=${_pal[mauve]}"
+        bracket-level-2                 "fg=${_pal[cyan]}"
+        bracket-level-3                 "fg=${_pal[yellow]}"
+        bracket-level-4                 "fg=${_pal[magenta]}"
+        cursor-matchingbracket          "standout"
+    )
+fi
+unset -f _zsh_plugin
+unset _pal
 true

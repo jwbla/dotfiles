@@ -141,7 +141,8 @@ prune_stale_links() {
 # Package name and proving binary are DIFFERENT axES, which is why PKG_BIN
 # exists: neovim's binary is `nvim`, so a `command -v neovim` check never fires
 # and the installer would happily apt-install a downgrade over a newer build.
-PKGS_CLI=(zsh tmux starship atuin jq fzf eza zoxide neovim git)
+PKGS_CLI=(zsh tmux starship atuin jq fzf eza zoxide neovim git
+          zsh-syntax-highlighting zsh-autosuggestions)
 
 # Terminals, installed on a Linux desktop only: on macOS both are casks that
 # `brew install` may or may not resolve, so they stay a manual step there. The
