@@ -60,6 +60,7 @@ history_filter = [
   "^x$",            # exit
   "^q$",            # exit
   "^l$",            # eza listing
+  "^lsd$",          # eza directories-only listing
   "^n$",            # nvim .
   "^t$",            # tmux picker
   "^clear$",

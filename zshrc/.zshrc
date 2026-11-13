@@ -132,8 +132,10 @@ if command -v eza >/dev/null; then
   alias l="eza -l --icons --git -a --group-directories-first"
   alias lt="eza --tree --level=2 --long --icons --git"
   alias ltree="eza --tree --level=2  --icons --git"
+  alias lsd="eza -lD --icons --git -a --group-directories-first"   # list directories only
 else
   alias l="ls -lA --color=auto --group-directories-first"
+  alias lsd="ls -lAd --color=auto */ .*/ 2>/dev/null"
 fi
 
 # ------------------------------
