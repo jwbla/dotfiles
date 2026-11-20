@@ -99,7 +99,7 @@ fc-cache -fv
 The zshrc degrades gracefully when tools are missing, but expects:
 
 - **core**: zsh, tmux, starship, fzf
-- **nice to have**: eza (`l`/`lt`), bat (`inv` preview), zoxide, git-delta,
+- **nice to have**: eza (`l`/`lt`/`lsd`), bat (`inv` preview), zoxide, git-delta,
   television (`tv`), atuin (Ctrl+R / Up history search — see below),
   zsh-syntax-highlighting + zsh-autosuggestions (command-line coloring and
   ghost-text completions; skipped when absent)
@@ -108,22 +108,31 @@ The zshrc degrades gracefully when tools are missing, but expects:
 ## Terminals and the neu palette
 
 The three terminal configs here are Catppuccin Mocha and complete on their
-own. Each ends in an *optional* include that the rgtv repo satisfies when it
-is installed and that is silently skipped otherwise:
+own. Each ends in *optional* includes that are silently skipped when the file
+is absent:
 
 | config | include | absent |
 |---|---|---|
-| `ghostty/config` | `config-file = ?neu.conf` | `?` skips it (ghostty ≥ 1.1) |
+| `ghostty/config` | `config-file = ?neu.conf`, then `?local.conf` | `?` skips it (ghostty ≥ 1.1) |
 | `kitty/kitty.conf` | `globinclude neu.conf` | matches zero files |
 | `alacritty/alacritty.toml` | `import = [...neu.toml]` | alacritty skips missing imports |
 
-Nothing in this repo may name a file only the rgtv repo ships. If a machine
-with only this repo shows ghostty complaining about a theme called `neu`, its
-checkout predates the split that moved the theme out (`4d67dbb`):
+`neu.conf` is the rgtv repo's palette and arrives with that repo. `local.conf`
+is a machine-local, untracked override loaded last (a theme being tried out,
+say); delete the file to fall back.
 
-```
-git pull && ./install.sh
-```
+Nothing in this repo may name a file only the rgtv repo ships. Because a bad
+ghostty config only shows up as a dialog when a window opens, `install.sh`
+runs `ghostty +validate-config` after linking and explains what it finds:
+
+- **`theme "neu" not found`** — a `~/.config/ghostty/neu.conf` still names the
+  neu theme but `themes/neu` is gone. Both belong to the rgtv repo: re-run its
+  installer, or remove `neu.conf` to fall back to Catppuccin.
+- **`error opening config-file ... ?neu.conf`** — that ghostty predates
+  optional includes; update it to 1.1 or newer.
+- **config is not this repo's link** — the checkout predates the split that
+  moved the theme out (`4d67dbb`), or an earlier `.predotfiles` backup blocked
+  the relink. `git pull && ./install.sh`, then look at `~/.config/ghostty/config`.
 
 ## atuin
 

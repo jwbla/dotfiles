@@ -15,3 +15,7 @@ confirm-close-surface = false
 # it, so ~/.config/ghostty/neu.conf wins over the theme above while it exists.
 # Removing that repo reverts this terminal to Catppuccin with no edit here.
 config-file = ?neu.conf
+
+# Machine-local experiments, loaded last so they win over both blocks above.
+# Not tracked anywhere; delete ~/.config/ghostty/local.conf to fall back.
+config-file = ?local.conf

@@ -133,6 +133,59 @@ prune_stale_links() {
     done
 }
 
+# The ghostty config ends in optional includes (`config-file = ?neu.conf`, then
+# `?local.conf`) that are only optional on ghostty >= 1.1, and a `neu.conf` the
+# rgtv repo left behind can name a theme that is no longer there. Either one
+# surfaces only when a window opens -- as a dialog on the work Mac -- so ask
+# ghostty to validate the tree now, at install time, and say what each failure
+# means. Reports only: neu.conf and themes/neu belong to the other repo and are
+# never removed from here.
+check_ghostty() {
+    local bin="" cfg="$HOME/.config/ghostty/config" ver major minor out
+    if command -v ghostty >/dev/null 2>&1; then
+        bin=ghostty
+    elif [[ -x /Applications/Ghostty.app/Contents/MacOS/ghostty ]]; then
+        bin=/Applications/Ghostty.app/Contents/MacOS/ghostty
+    else
+        return 0   # not installed here; nothing reads the config
+    fi
+    local managed=1
+    if [[ "$(readlink "$cfg" 2>/dev/null || true)" != "$SCRIPT_DIR/ghostty/config" ]]; then
+        managed=0
+        echo "  ⚠️  $cfg is not this repo's link -- a pre-split config or a blocked"
+        echo "      relink (see any .predotfiles note above); ghostty reads that, not this repo"
+    fi
+    ver="$("$bin" +version 2>/dev/null | awk 'NR==1 { print $2 }')"
+    major="${ver%%.*}"; minor="${ver#*.}"; minor="${minor%%.*}"
+    if [[ "$major" =~ ^[0-9]+$ && "$minor" =~ ^[0-9]+$ ]] \
+        && (( major < 1 || (major == 1 && minor < 1) )); then
+        echo "  ⚠️  ghostty $ver predates optional includes (config-file = ?...): update it"
+        echo "      to 1.1 or newer, or it will report ?neu.conf as a missing file"
+    fi
+    if out="$("$bin" +validate-config 2>&1)"; then
+        echo "  ✅ ghostty config validates"
+        return 0
+    fi
+    echo "  ⚠️  ghostty rejects its config:"
+    printf '%s\n' "$out" | awk '!seen[$0]++' | sed 's/^/      | /'
+    case "$out" in
+        *'theme "neu" not found'*)
+            if (( managed )); then
+                echo "      -> ~/.config/ghostty/neu.conf names the neu theme but themes/neu is gone."
+                echo "         Both belong to the rgtv dotfiles: re-run that repo's install.sh, or"
+                echo "         remove ~/.config/ghostty/neu.conf to fall back to Catppuccin."
+            else
+                echo "      -> that unmanaged config names the neu theme itself. Move it (and any"
+                echo "         config.predotfiles) aside and re-run this installer to relink it."
+            fi ;;
+        *'error opening config-file'*'?'*)
+            echo "      -> this ghostty predates optional (?) includes; update it to 1.1 or newer." ;;
+        *'error opening config-file'*)
+            echo "      -> a config-file include names a file that is not there." ;;
+    esac
+    return 0
+}
+
 # ---------------------------------------------------------------- packages --
 # One canonical list (Arch names), plus per-manager overrides. Three parallel
 # arrays duplicated nine identical strings at two managers and would not survive
@@ -322,6 +375,9 @@ if [[ "$MODE" == "full" ]]; then
     link kitty/kitty.conf         "$HOME/.config/kitty/kitty.conf"
     link alacritty/alacritty.toml "$HOME/.config/alacritty/alacritty.toml"
     link ghostty/config           "$HOME/.config/ghostty/config"
+
+    echo "🔍 Checking the ghostty config..."
+    check_ghostty
 fi
 
 echo "🧹 Pruning links left by older revisions of this repo..."
